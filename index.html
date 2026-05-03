@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login — Kopi Telu Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--brown:#92400e;--amber:#b45309;--light:#fffbf5;--card:#fff;--border:#e5d8c8;--text:#1c1410;--muted:#7a6652}
+    body{font-family:'DM Sans',sans-serif;background:var(--light);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+      background-image:radial-gradient(circle at 20% 20%,#fde68a22 0%,transparent 50%),radial-gradient(circle at 80% 80%,#d9770622 0%,transparent 50%)}
+    .wrap{width:100%;max-width:380px}
+    .brand{text-align:center;margin-bottom:28px}
+    .brand-icon{width:64px;height:64px;background:var(--brown);border-radius:20px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:12px;box-shadow:0 8px 24px #92400e33}
+    .brand h1{font-family:'DM Serif Display',serif;font-size:24px;color:var(--text)}
+    .brand p{font-size:13px;color:var(--muted);margin-top:4px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:28px 24px;box-shadow:0 4px 32px #92400e0f}
+    .form-group{margin-bottom:14px}
+    label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px;letter-spacing:.04em;text-transform:uppercase}
+    input,select{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);background:#fafaf8;transition:border-color .2s;outline:none}
+    input:focus,select:focus{border-color:var(--amber);background:#fff}
+    select:disabled{color:var(--muted);background:#f5f0ea;cursor:not-allowed}
+    .btn-login{width:100%;background:var(--brown);color:#fff;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:6px;transition:background .2s}
+    .btn-login:hover{background:var(--amber)}
+    .btn-login:disabled{background:#d1b89a;cursor:not-allowed}
+    .error{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;font-size:13px;border-radius:8px;padding:10px 12px;margin-bottom:14px;display:none}
+    .hint{font-size:11px;color:var(--muted);margin-top:5px;min-height:16px}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="brand-icon">☕</div>
+    <h1>Kopi Telu Report</h1>
+    <p>Sistem Laporan Shift</p>
+  </div>
+  <div class="card">
+    <div class="error" id="err"></div>
+    <div class="form-group">
+      <label>Username</label>
+      <input id="username" type="text" placeholder="Masukkan username" autocomplete="username" oninput="onUsernameInput()"/>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input id="password" type="password" placeholder="Masukkan password"/>
+    </div>
+    <div class="form-group">
+      <label>Outlet</label>
+      <select id="outlet" disabled>
+        <option value="">-- Masukkan username dulu --</option>
+      </select>
+      <div class="hint" id="outlet-hint"></div>
+    </div>
+    <button class="btn-login" id="btn-login">Masuk</button>
+  </div>
+</div>
+
+<script type="module">
+  import { Auth, OutletManager } from './js/auth.js';
+
+  const existing = Auth.getUser();
+  if (existing) window.location.href = existing.role === 'owner' ? 'dashboard.html' : 'input.html';
+
+  let allOutlets = [];
+  let debounceTimer = null;
+
+  // Preload outlets
+  OutletManager.getAll().then(list => { allOutlets = list; });
+
+  window.onUsernameInput = () => {
+    clearTimeout(debounceTimer);
+    const username = document.getElementById('username').value.trim();
+    const sel = document.getElementById('outlet');
+    const hint = document.getElementById('outlet-hint');
+    sel.innerHTML = '<option value="">-- Pilih outlet --</option>';
+    sel.disabled = true;
+    hint.textContent = '';
+    if (!username) return;
+
+    // Owner: tampilkan semua outlet dari Firestore
+    if (username === 'owner') {
+      allOutlets.forEach(o => {
+        sel.innerHTML += `<option value="${o.id}">${o.nama}</option>`;
+      });
+      sel.innerHTML = '<option value="all">Semua Outlet (Owner)</option>' +
+        allOutlets.map(o => `<option value="${o.id}">${o.nama}</option>`).join('');
+      sel.disabled = false;
+      return;
+    }
+
+    hint.textContent = 'Mencari data...';
+    debounceTimer = setTimeout(async () => {
+      try {
+        const users = await Auth.getUsers();
+        const found = users.find(u => u.username === username);
+        if (!found) { hint.textContent = 'Username tidak ditemukan.'; sel.innerHTML = '<option value="">--</option>'; return; }
+        const allowed = found.outlets || (found.outlet ? [found.outlet] : []);
+        const namesMap = await OutletManager.getNamesMap();
+        sel.innerHTML = '<option value="">-- Pilih outlet --</option>';
+        allowed.forEach(oid => {
+          sel.innerHTML += `<option value="${oid}">${namesMap[oid] || oid}</option>`;
+        });
+        sel.disabled = false;
+        hint.textContent = `Terdaftar di ${allowed.length} outlet.`;
+      } catch(e) { hint.textContent = 'Gagal memuat outlet.'; }
+    }, 600);
+  };
+
+  async function doLogin() {
+    const u = document.getElementById('username').value.trim();
+    const p = document.getElementById('password').value.trim();
+    const o = document.getElementById('outlet').value;
+    const err = document.getElementById('err');
+    const btn = document.getElementById('btn-login');
+    err.style.display = 'none';
+    if (!u || !p) { err.textContent = 'Username dan password harus diisi.'; err.style.display = 'block'; return; }
+    if (!o) { err.textContent = 'Pilih outlet terlebih dahulu.'; err.style.display = 'block'; return; }
+    btn.disabled = true; btn.textContent = 'Memeriksa...';
+    try {
+      const user = await Auth.login(u, p, o);
+      if (!user) { err.textContent = 'Username atau password salah.'; err.style.display = 'block'; return; }
+      window.location.href = user.role === 'owner' ? 'dashboard.html' : 'home.html';
+    } catch(e) {
+      err.textContent = e.message; err.style.display = 'block';
+    } finally { btn.disabled = false; btn.textContent = 'Masuk'; }
+  }
+
+  document.getElementById('btn-login').addEventListener('click', doLogin);
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+</script>
+</body>
+</html>
