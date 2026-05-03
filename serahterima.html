@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Serah Terima — Kopi Telu Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--brown:#92400e;--amber:#b45309;--light:#fffbf5;--card:#fff;--border:#e5d8c8;--text:#1c1410;--muted:#7a6652;--green:#059669;--red:#dc2626;--blue:#2563eb}
+    body{font-family:'DM Sans',sans-serif;background:var(--light);color:var(--text);min-height:100vh}
+    header{background:var(--brown);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px #92400e44}
+    .header-left{display:flex;align-items:center;gap:10px}
+    .logo{width:32px;height:32px;background:#78350f;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+    .app-name{font-family:'DM Serif Display',serif;font-size:17px}
+    .btn-link{color:#fcd34d;font-size:13px;cursor:pointer;background:none;border:none;text-decoration:none}
+    .user-badge{background:#78350f;padding:3px 10px;border-radius:99px;font-size:12px}
+    main{max-width:480px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:40px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px}
+    .card-title{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+    .form-group{margin-bottom:12px}
+    .form-group label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
+    .form-group input,.form-group select{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);background:#fafaf8;outline:none;transition:border-color .2s}
+    .form-group input:focus,.form-group select:focus{border-color:var(--amber);background:#fff}
+    .input-prefix{position:relative}
+    .input-prefix span{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted);pointer-events:none}
+    .input-prefix input{padding-left:32px}
+    .info-box{border-radius:12px;padding:14px 16px;margin-bottom:4px}
+    .info-box.blue{background:#eff6ff;border:1.5px solid #bfdbfe}
+    .info-box.green{background:#f0fdf4;border:1.5px solid #6ee7b7}
+    .info-box.yellow{background:#fffbeb;border:1.5px solid #fde68a}
+    .info-box.red{background:#fef2f2;border:1.5px solid #fecaca}
+    .info-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+    .info-value{font-family:'DM Serif Display',serif;font-size:22px}
+    .info-sub{font-size:11px;color:var(--muted);margin-top:3px}
+    .btn-submit{width:100%;background:var(--brown);color:#fff;border:none;border-radius:14px;padding:16px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;box-shadow:0 4px 16px #92400e33;transition:background .2s}
+    .btn-submit:hover{background:var(--amber)}
+    .btn-submit:disabled{background:#d1b89a;cursor:not-allowed}
+    .success-banner{background:#ecfdf5;border:1.5px solid #6ee7b7;border-radius:14px;padding:16px;display:none;align-items:center;gap:12px}
+    .success-banner.show{display:flex}
+    .riwayat-item{background:var(--light);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center}
+    .empty-state{text-align:center;padding:24px;color:var(--muted);font-size:13px}
+    .selisih-ok{color:var(--green);font-weight:600}
+    .selisih-warn{color:var(--red);font-weight:600}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo">☕</div>
+    <span class="app-name">Serah Terima Kas</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="user-badge" id="user-badge">-</span>
+    <a href="home.html" class="btn-link">← Menu</a>
+  </div>
+</header>
+
+<main>
+  <div class="success-banner" id="success-banner">
+    <div style="font-size:24px">✅</div>
+    <div><strong style="font-size:14px;color:#065f46;display:block">Serah terima berhasil dicatat!</strong><span style="font-size:12px;color:#047857">Data sudah masuk ke sistem.</span></div>
+  </div>
+
+  <!-- Form Serah Terima -->
+  <div class="card">
+    <div class="card-title">🤝 Konfirmasi Terima Kas</div>
+
+    <div class="form-group">
+      <label>Outlet</label>
+      <select id="f-outlet">
+        <option value="">-- Pilih Outlet --</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Shift Kamu (Yang Menerima)</label>
+      <select id="f-shift">
+        <option value="Pagi">🌅 Shift Pagi</option>
+        <option value="Sore">🌆 Shift Sore</option>
+      </select>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px" id="shift-hint"></div>
+    </div>
+
+    <!-- Info shift sebelumnya -->
+    <div id="info-sebelumnya" style="display:none;margin-bottom:12px">
+      <div class="info-box blue">
+        <div class="info-label">Shift Sebelumnya</div>
+        <div style="font-size:13px;font-weight:500" id="info-shift-sebelumnya">-</div>
+        <div class="info-sub" id="info-kasir-sebelumnya">-</div>
+      </div>
+    </div>
+
+    <!-- Instruksi -->
+    <div class="info-box yellow" style="margin-bottom:14px">
+      <div style="font-size:12px;color:#92400e;line-height:1.6">
+        ⚠️ <strong>Jangan lihat sistem dulu!</strong><br>
+        Hitung fisik uang yang ada di laci, lalu masukkan nominalnya di bawah.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Jumlah Kas yang Kamu Terima (Hitung Fisik)</label>
+      <div class="input-prefix">
+        <span>Rp</span>
+        <input type="text" inputmode="numeric" id="f-nominal" placeholder="0" oninput="hitungSelisih()"/>
+      </div>
+    </div>
+
+    <!-- Hasil setelah input -->
+    <div id="hasil-cek" style="display:none;margin-top:4px"></div>
+  </div>
+
+  <button class="btn-submit" id="btn-submit">✅ Konfirmasi Serah Terima</button>
+
+  <!-- Riwayat hari ini -->
+  <div class="card">
+    <div class="card-title">📋 Riwayat Serah Terima Hari Ini</div>
+    <div id="riwayat-list"><div class="empty-state">Memuat...</div></div>
+  </div>
+</main>
+
+<script type="module">
+  import { Auth, OutletManager } from './js/auth.js';
+  import { Storage } from './js/firebase.js';
+
+  const user = Auth.requireAuth();
+  if (!user) throw new Error();
+
+  document.getElementById('user-badge').textContent = user.nama;
+  window.doLogout = () => Auth.logout();
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  let kasAkhirSebelumnya = 0;
+
+  // Auto-detect shift berdasarkan jam
+  const hour = new Date().getHours();
+  const shiftSel = document.getElementById('f-shift');
+  if (hour >= 12) {
+    shiftSel.value = 'Sore';
+    document.getElementById('shift-hint').textContent = '⏰ Auto-detect: Shift Sore';
+  } else {
+    shiftSel.value = 'Pagi';
+    document.getElementById('shift-hint').textContent = '⏰ Auto-detect: Shift Pagi';
+  }
+
+  // Load outlets
+  async function loadOutlets() {
+    const allOutlets = await OutletManager.getAll();
+    const sel = document.getElementById('f-outlet');
+    const allowed = user.role === 'owner'
+      ? allOutlets.map(o => o.id)
+      : (user.outlets || (user.outlet ? [user.outlet] : []));
+    allOutlets.filter(o => allowed.includes(o.id)).forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o.id; opt.textContent = o.nama;
+      sel.appendChild(opt);
+    });
+    if (allowed.length === 1) { sel.value = allowed[0]; sel.disabled = true; }
+  }
+  await loadOutlets();
+
+  // Cek kas shift sebelumnya
+  async function cekShiftSebelumnya() {
+    const outlet = document.getElementById('f-outlet').value;
+    const shift  = document.getElementById('f-shift').value;
+    const infoDiv = document.getElementById('info-sebelumnya');
+
+    if (!outlet || !shift) { infoDiv.style.display = 'none'; return; }
+
+    const SHIFT_PREV = { Pagi: null, Sore: 'Pagi' };
+    const prevShift = SHIFT_PREV[shift];
+
+    if (!prevShift) {
+      infoDiv.style.display = 'none';
+      kasAkhirSebelumnya = 0;
+      return;
+    }
+
+    try {
+      const reports = await Storage.getReports(outlet, todayStr, todayStr);
+      const prevReport = reports.find(r => r.shift === prevShift);
+
+      if (!prevReport) {
+        document.getElementById('info-shift-sebelumnya').textContent = `Shift ${prevShift} — Belum ada laporan`;
+        document.getElementById('info-kasir-sebelumnya').textContent = 'Laporan shift sebelumnya belum diinput';
+        kasAkhirSebelumnya = 0;
+        infoDiv.style.display = 'block';
+        return;
+      }
+
+      // Kas akhir tersembunyi dari pegawai — hanya dipakai untuk perbandingan
+      kasAkhirSebelumnya = prevReport.kasAkhirAktual || prevReport.kasAkhirTeoritis || 0;
+      document.getElementById('info-shift-sebelumnya').textContent = `Shift ${prevShift} — ${(prevReport.karyawan||[]).join(', ')}`;
+      document.getElementById('info-kasir-sebelumnya').textContent = `Laporan sudah diinput pada ${prevReport.createdAtWIB || '-'}`;
+      infoDiv.style.display = 'block';
+    } catch(e) {
+      console.error(e);
+    }
+  }
+
+  document.getElementById('f-outlet').addEventListener('change', () => { cekShiftSebelumnya(); loadRiwayat(); });
+  document.getElementById('f-shift').addEventListener('change', cekShiftSebelumnya);
+  cekShiftSebelumnya();
+
+  // Auto format nominal
+  function parseAngka(val) { return parseInt(String(val).replace(/[^\d]/g, '') || '0', 10); }
+  function fmt(n) { return 'Rp ' + Math.round(n).toLocaleString('id-ID'); }
+
+  const nominalEl = document.getElementById('f-nominal');
+  nominalEl.addEventListener('keydown', e => {
+    const allowed = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'];
+    if (allowed.includes(e.key) || e.ctrlKey || e.metaKey) return;
+    if (!/^\d$/.test(e.key)) e.preventDefault();
+  });
+  nominalEl.addEventListener('input', function() {
+    const digits = this.value.replace(/[^\d]/g, '');
+    const num = parseInt(digits || '0', 10);
+    const formatted = num === 0 ? '' : num.toLocaleString('id-ID');
+    const pos = this.selectionStart;
+    const prev = this.value.length;
+    this.value = formatted;
+    this.setSelectionRange(Math.max(0, pos + (formatted.length - prev)), Math.max(0, pos + (formatted.length - prev)));
+    hitungSelisih();
+  });
+
+  window.hitungSelisih = () => {
+    const nominal = parseAngka(document.getElementById('f-nominal').value);
+    const hasilDiv = document.getElementById('hasil-cek');
+    if (nominal === 0 || kasAkhirSebelumnya === 0) { hasilDiv.style.display = 'none'; return; }
+    // Selisih tersembunyi dari pegawai — hanya tampil konfirmasi
+    hasilDiv.style.display = 'block';
+    hasilDiv.innerHTML = `<div class="info-box green">
+      <div style="font-size:13px;color:#065f46">✅ Nominal tercatat. Klik konfirmasi untuk lanjut.</div>
+    </div>`;
+  };
+
+  // Submit
+  document.getElementById('btn-submit').addEventListener('click', async () => {
+    const outlet  = document.getElementById('f-outlet').value;
+    const shift   = document.getElementById('f-shift').value;
+    const nominal = parseAngka(document.getElementById('f-nominal').value);
+
+    if (!outlet) { alert('Pilih outlet!'); return; }
+    if (nominal === 0) { alert('Masukkan jumlah kas yang diterima!'); return; }
+
+    const btn = document.getElementById('btn-submit');
+    btn.disabled = true; btn.textContent = '⏳ Menyimpan...';
+
+    try {
+      const now = new Date();
+      const selisih = kasAkhirSebelumnya > 0 ? nominal - kasAkhirSebelumnya : null;
+      const outletNama = (await OutletManager.getNamesMap())[outlet] || outlet;
+      const waktuInput = now.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour12: false });
+
+      await Storage.saveSerahTerima({
+        outlet, outletNama, shift, tanggal: todayStr,
+        nominalDiterima: nominal,
+        nominalDiserahkan: kasAkhirSebelumnya,
+        selisih,
+        penerima: user.username,
+        penerimaNama: user.nama,
+        createdAt: now.toISOString(),
+        createdAtWIB: waktuInput
+      });
+
+      // Notif Telegram ke owner — include selisih kalau ada
+      try {
+        const selisihInfo = selisih !== null
+          ? `\n${selisih === 0 ? '✅ Kas sesuai!' : `🚨 Selisih: ${selisih > 0 ? '+' : ''}${fmt(selisih)}`}`
+          : '';
+        const pesan = `🤝 *SERAH TERIMA KAS*\n\n` +
+          `🏪 *${outletNama}*\n` +
+          `📅 ${todayStr.split('-').reverse().join('/')} — Shift ${shift}\n` +
+          `🕐 ${waktuInput}\n\n` +
+          `💰 Nominal Diterima: *${fmt(nominal)}*` +
+          selisihInfo +
+          `\n\n_Dikonfirmasi oleh: ${user.nama}_`;
+
+        await fetch(`https://api.telegram.org/bot8613637829:AAERHEyn8KfJRcJIDra-w3h-kgYcS29WhMQ/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: '7202941698', text: pesan, parse_mode: 'Markdown' })
+        });
+      } catch(e) { console.warn('Telegram gagal:', e); }
+
+      // Reset
+      document.getElementById('f-nominal').value = '';
+      document.getElementById('hasil-cek').style.display = 'none';
+      if (!document.getElementById('f-outlet').disabled) document.getElementById('f-outlet').value = '';
+      kasAkhirSebelumnya = 0;
+
+      const banner = document.getElementById('success-banner');
+      banner.classList.add('show');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => banner.classList.remove('show'), 4000);
+      loadRiwayat();
+    } catch(e) {
+      alert('Gagal menyimpan: ' + e.message);
+    } finally {
+      btn.disabled = false; btn.textContent = '✅ Konfirmasi Serah Terima';
+    }
+  });
+
+  // Riwayat hari ini
+  async function loadRiwayat() {
+    const list = document.getElementById('riwayat-list');
+    list.innerHTML = '<div class="empty-state">Memuat...</div>';
+    try {
+      const outlet = document.getElementById('f-outlet').value;
+      const data = await Storage.getSerahTerimaByDate(todayStr, outlet);
+      const filtered = user.role === 'owner' ? data : data.filter(d => d.penerima === user.username);
+
+      if (!filtered.length) {
+        list.innerHTML = '<div class="empty-state">Belum ada serah terima hari ini</div>';
+        return;
+      }
+      list.innerHTML = filtered.map(d => {
+        const selisih = d.selisih;
+        const selisihText = selisih === null ? '' :
+          selisih === 0 ? '<span class="selisih-ok">✅ Sesuai</span>' :
+          `<span class="selisih-warn">🚨 Selisih ${selisih > 0 ? '+' : ''}${fmt(selisih)}</span>`;
+        return `<div class="riwayat-item">
+          <div>
+            <div style="font-size:13px;font-weight:500">Shift ${d.shift} — ${d.penerimaNama||d.penerima}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">${d.createdAtWIB||'-'}</div>
+            ${selisihText ? `<div style="margin-top:4px">${selisihText}</div>` : ''}
+          </div>
+          <div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--green)">${fmt(d.nominalDiterima)}</div>
+        </div>`;
+      }).join('');
+    } catch(e) {
+      list.innerHTML = '<div class="empty-state">Belum ada serah terima hari ini</div>';
+    }
+  }
+  loadRiwayat();
+</script>
+</body>
+</html>
