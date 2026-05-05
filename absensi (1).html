@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rekap Absensi — Kopi Telu Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--brown:#92400e;--amber:#b45309;--light:#fffbf5;--card:#fff;--border:#e5d8c8;--text:#1c1410;--muted:#7a6652;--green:#059669;--red:#dc2626;--blue:#2563eb}
+    body{font-family:'DM Sans',sans-serif;background:var(--light);color:var(--text);min-height:100vh}
+    header{background:var(--brown);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px #92400e44}
+    .header-left{display:flex;align-items:center;gap:10px}
+    .logo{width:32px;height:32px;background:#78350f;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+    .app-name{font-family:'DM Serif Display',serif;font-size:17px}
+    .btn-link{color:#fcd34d;font-size:13px;cursor:pointer;background:none;border:none;text-decoration:none}
+    .user-badge{background:#78350f;padding:3px 10px;border-radius:99px;font-size:12px}
+    main{max-width:900px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:40px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px}
+    .filter-bar{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+    .filter-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:130px}
+    .filter-group label{font-size:11px;font-weight:600;color:var(--muted)}
+    .filter-group input,.filter-group select{border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);background:#fafaf8;outline:none}
+    .filter-group input:focus{border-color:var(--amber)}
+    .btn-filter{background:var(--brown);color:#fff;border:none;border-radius:10px;padding:9px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+    .btn-filter:hover{background:var(--amber)}
+    .preset-btns{display:flex;gap:6px;flex-wrap:wrap}
+    .preset-btn{background:var(--light);border:1.5px solid var(--border);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--muted)}
+    .preset-btn.active{background:var(--brown);color:#fff;border-color:var(--brown)}
+    /* Section headers */
+    .section-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid var(--border)}
+    .section-title{font-size:15px;font-weight:700;color:var(--text)}
+    .section-sub{font-size:12px;color:var(--muted)}
+    /* Karyawan card (untuk pool) */
+    .karyawan-card{background:var(--light);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
+    .karyawan-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .karyawan-nama{font-size:14px;font-weight:600}
+    .karyawan-total{display:inline-flex;align-items:center;justify-content:center;min-width:40px;height:40px;padding:0 10px;border-radius:10px;font-family:'DM Serif Display',serif;font-size:20px;font-weight:600;background:#dbeafe;color:var(--blue)}
+    .outlet-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
+    .outlet-row:last-child{border-bottom:none}
+    .shift-pill{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px;margin:1px}
+    .pill-pagi{background:#fef3c7;color:#92400e}
+    .pill-middle{background:#dbeafe;color:#1e40af}
+    .pill-sore{background:#ede9fe;color:#5b21b6}
+    /* Table (untuk outlet tetap) */
+    .absensi-table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+    .absensi-table th{text-align:left;padding:8px 12px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:2px solid var(--border);background:var(--light)}
+    .absensi-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;overflow:hidden}
+    .absensi-table tr:last-child td{border-bottom:none}
+    .absensi-table tr:hover td{background:#fffbf0}
+    .hari-badge{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;font-family:'DM Serif Display',serif;font-size:17px;background:#dbeafe;color:var(--blue)}
+    .empty-state{text-align:center;padding:32px;color:var(--muted);font-size:13px}
+    .outlet-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    @media(max-width:600px){.absensi-table{display:block;overflow-x:auto}}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo">☕</div>
+    <span class="app-name">Kopi Telu Report</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="user-badge" id="user-badge">-</span>
+    <a href="dashboard.html" class="btn-link">← Dashboard</a>
+    <button class="btn-link" onclick="doLogout()">Keluar →</button>
+  </div>
+</header>
+
+<main>
+  <div>
+    <div style="font-family:'DM Serif Display',serif;font-size:22px">📅 Rekap Absensi</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:2px">Dihitung otomatis dari laporan shift</div>
+  </div>
+
+  <!-- Filter -->
+  <div class="filter-bar">
+    <div class="filter-group" style="flex:2;min-width:200px">
+      <label>Preset Periode</label>
+      <div class="preset-btns">
+        <button class="preset-btn" id="btn-minggu" onclick="setPreset('minggu',this)">Minggu ini</button>
+        <button class="preset-btn" id="btn-bulan" onclick="setPreset('bulan',this)">Bulan ini</button>
+        <button class="preset-btn active" id="btn-gajian" onclick="setPreset('gajian',this)">Periode Gaji</button>
+        <button class="preset-btn" id="btn-custom" onclick="setPreset('custom',this)">Custom</button>
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Dari Tanggal</label>
+      <input type="date" id="f-start"/>
+    </div>
+    <div class="filter-group">
+      <label>Sampai Tanggal</label>
+      <input type="date" id="f-end"/>
+    </div>
+    <button class="btn-filter" onclick="loadAbsensi()">🔍 Tampilkan</button>
+  </div>
+
+  <div id="periode-info" style="font-size:12px;color:var(--muted);padding:0 4px"></div>
+
+  <!-- Hasil -->
+  <div id="hasil-container">
+    <div class="empty-state">Pilih periode dan klik Tampilkan</div>
+  </div>
+</main>
+
+<script type="module">
+  import { Auth, OutletManager } from './js/auth.js';
+  import { Storage } from './js/firebase.js';
+
+  const user = Auth.requireAuth('owner');
+  if (!user) throw new Error();
+
+  document.getElementById('user-badge').textContent = user.nama;
+  window.doLogout = () => Auth.logout();
+
+  const OUTLET_COLORS = ['#f59e0b','#3b82f6','#10b981','#8b5cf6','#ef4444','#06b6d4'];
+
+  // ID outlet pool (rolling) — Sawah View, Awang Awang, Bar Eskrim
+  // Outlet lain (Citraland, Tanara) = outlet tetap
+  const POOL_OUTLET_NAMES = ['sawah', 'awang', 'eskrim', 'bar'];
+
+  let allOutlets = [];
+  let poolOutlets = [];
+  let tetapOutlets = [];
+
+  async function init() {
+    allOutlets = await OutletManager.getAll();
+
+    // Klasifikasi pool vs tetap berdasarkan nama outlet
+    poolOutlets  = allOutlets.filter(o =>
+      POOL_OUTLET_NAMES.some(k => o.nama.toLowerCase().includes(k))
+    );
+    tetapOutlets = allOutlets.filter(o =>
+      !POOL_OUTLET_NAMES.some(k => o.nama.toLowerCase().includes(k))
+    );
+
+    setPreset('gajian', document.getElementById('btn-gajian'));
+  }
+  init();
+
+  window.setPreset = function(type, btn) {
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = today.getMonth();
+    const d = today.getDate();
+    let start, end;
+
+    if (type === 'minggu') {
+      const day = today.getDay() || 7;
+      start = new Date(today); start.setDate(d - day + 1);
+      end   = new Date(today); end.setDate(d - day + 7);
+    } else if (type === 'bulan') {
+      start = new Date(y, m, 1);
+      end   = new Date(y, m + 1, 0);
+    } else if (type === 'gajian') {
+      // Periode gaji: 21 bulan lalu s/d 20 bulan ini
+      if (d >= 21) {
+        start = new Date(y, m, 21);
+        end   = new Date(y, m + 1, 20);
+      } else {
+        start = new Date(y, m - 1, 21);
+        end   = new Date(y, m, 20);
+      }
+    } else {
+      return; // Custom — user isi manual
+    }
+
+    document.getElementById('f-start').value = start.toISOString().split('T')[0];
+    document.getElementById('f-end').value   = end.toISOString().split('T')[0];
+  };
+
+  function fmtDate(str) {
+    if (!str) return '-';
+    const [y,m,d] = str.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  window.loadAbsensi = async function() {
+    const start = document.getElementById('f-start').value;
+    const end   = document.getElementById('f-end').value;
+    if (!start || !end) { alert('Pilih periode dulu!'); return; }
+
+    const container = document.getElementById('hasil-container');
+    container.innerHTML = '<div class="empty-state">⏳ Memuat data absensi...</div>';
+    document.getElementById('periode-info').textContent = `📅 Periode: ${fmtDate(start)} — ${fmtDate(end)}`;
+
+    try {
+      const reports = await Storage.getReports('all', start, end);
+      if (!reports.length) {
+        container.innerHTML = '<div class="empty-state">Tidak ada laporan di periode ini</div>';
+        return;
+      }
+
+      // Build absensi map: { outletId: { nama: { hari: Set, Pagi, Middle, Sore } } }
+      const absensiMap = {};
+      reports.forEach(r => {
+        if (!absensiMap[r.outlet]) absensiMap[r.outlet] = {};
+        (r.karyawan || []).forEach(nama => {
+          if (!nama) return;
+          if (!absensiMap[r.outlet][nama]) absensiMap[r.outlet][nama] = { hari: new Set(), Pagi:0, Middle:0, Sore:0 };
+          absensiMap[r.outlet][nama].hari.add(r.tanggal);
+          absensiMap[r.outlet][nama][r.shift] = (absensiMap[r.outlet][nama][r.shift]||0) + 1;
+        });
+      });
+
+      let html = '';
+
+      // ===== SECTION 1: POOL OUTLET =====
+      const poolIds = poolOutlets.map(o => o.id);
+      const poolKaryawan = {};
+
+      poolIds.forEach(outletId => {
+        const outletData = absensiMap[outletId] || {};
+        Object.entries(outletData).forEach(([nama, data]) => {
+          if (!poolKaryawan[nama]) poolKaryawan[nama] = { hari: new Set(), outlets: {} };
+          data.hari.forEach(h => poolKaryawan[nama].hari.add(h));
+          poolKaryawan[nama].outlets[outletId] = data;
+        });
+      });
+
+      if (Object.keys(poolKaryawan).length > 0) {
+        const poolNamas = poolOutlets.map(o => o.nama).join(', ');
+        const totalHariPool = Object.values(poolKaryawan).reduce((s,d) => s + d.hari.size, 0);
+
+        html += `
+          <div class="card">
+            <div class="section-header">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="outlet-dot" style="background:#f59e0b;width:14px;height:14px"></div>
+                <div>
+                  <div class="section-title">🔄 Pool Outlet</div>
+                  <div class="section-sub">${poolNamas}</div>
+                </div>
+              </div>
+              <div style="font-size:12px;color:var(--muted)">${Object.keys(poolKaryawan).length} karyawan · ${totalHariPool} total hari kerja</div>
+            </div>
+            <table class="absensi-table">
+              <thead>
+                <tr>
+                  <th style="width:18%">Karyawan</th>
+                  <th style="width:20%">Outlet</th>
+                  <th style="width:10%;text-align:center">Hari Masuk</th>
+                  <th style="width:24%">Shift</th>
+                  <th style="width:9%;text-align:center">Pagi</th>
+                  <th style="width:9%;text-align:center">Middle</th>
+                  <th style="width:9%;text-align:center">Sore</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${Object.entries(poolKaryawan)
+                  .sort((a,b) => b[1].hari.size - a[1].hari.size)
+                  .map(([nama, data]) => {
+                    const totalHari = data.hari.size;
+                    const totalPagi   = Object.values(data.outlets).reduce((s,d) => s + (d.Pagi||0), 0);
+                    const totalMiddle = Object.values(data.outlets).reduce((s,d) => s + (d.Middle||0), 0);
+                    const totalSore   = Object.values(data.outlets).reduce((s,d) => s + (d.Sore||0), 0);
+
+                    const outletDetail = poolOutlets
+                      .filter(o => data.outlets[o.id])
+                      .map(o => {
+                        const color = OUTLET_COLORS[allOutlets.findIndex(x=>x.id===o.id) % OUTLET_COLORS.length];
+                        const od = data.outlets[o.id];
+                        // Nama pendek outlet
+                        const shortName = o.nama.replace('Kopi Telu ','').replace('Bar ','');
+                        return `<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);margin-bottom:2px">
+                          <div style="width:6px;height:6px;border-radius:50%;background:${color};flex-shrink:0"></div>
+                          ${shortName}: <strong>${od.hari.size}h</strong>
+                        </div>`;
+                      }).join('');
+
+                    return `<tr>
+                      <td><strong>${nama}</strong></td>
+                      <td style="min-width:110px">${outletDetail}</td>
+                      <td style="text-align:center"><div class="hari-badge">${totalHari}</div></td>
+                      <td>
+                        ${totalPagi ? `<span class="shift-pill pill-pagi">Pagi ×${totalPagi}</span>` : ''}
+                        ${totalMiddle ? `<span class="shift-pill pill-middle">Mid ×${totalMiddle}</span>` : ''}
+                        ${totalSore ? `<span class="shift-pill pill-sore">Sore ×${totalSore}</span>` : ''}
+                      </td>
+                      <td style="text-align:center;color:var(--muted)">${totalPagi||'-'}</td>
+                      <td style="text-align:center;color:var(--muted)">${totalMiddle||'-'}</td>
+                      <td style="text-align:center;color:var(--muted)">${totalSore||'-'}</td>
+                    </tr>`;
+                  }).join('')}
+              </tbody>
+            </table>
+          </div>`;
+      }
+
+      // ===== SECTION 2: OUTLET TETAP =====
+      tetapOutlets.forEach((o, idx) => {
+        const outletData = absensiMap[o.id];
+        if (!outletData || !Object.keys(outletData).length) return;
+
+        const color = OUTLET_COLORS[(allOutlets.findIndex(x=>x.id===o.id)) % OUTLET_COLORS.length];
+        const entries = Object.entries(outletData).sort((a,b) => b[1].hari.size - a[1].hari.size);
+        const totalHari = entries.reduce((s,[,d]) => s + d.hari.size, 0);
+
+        html += `
+          <div class="card">
+            <div class="section-header">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="outlet-dot" style="background:${color};width:14px;height:14px"></div>
+                <div>
+                  <div class="section-title">${o.nama}</div>
+                  <div class="section-sub">${entries.length} karyawan · ${totalHari} total hari kerja</div>
+                </div>
+              </div>
+            </div>
+            <table class="absensi-table">
+              <thead>
+                <tr>
+                  <th style="width:18%">Karyawan</th>
+                  <th style="width:10%"></th>
+                  <th style="width:10%;text-align:center">Hari Masuk</th>
+                  <th style="width:28%">Shift</th>
+                  <th style="width:9%;text-align:center">Pagi</th>
+                  <th style="width:9%;text-align:center">Middle</th>
+                  <th style="width:9%;text-align:center">Sore</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${entries.map(([nama, data]) => `
+                  <tr>
+                    <td><strong>${nama}</strong></td>
+                    <td></td>
+                    <td style="text-align:center"><div class="hari-badge">${data.hari.size}</div></td>
+                    <td>
+                      ${data.Pagi ? `<span class="shift-pill pill-pagi">Pagi ×${data.Pagi}</span>` : ''}
+                      ${data.Middle ? `<span class="shift-pill pill-middle">Mid ×${data.Middle}</span>` : ''}
+                      ${data.Sore ? `<span class="shift-pill pill-sore">Sore ×${data.Sore}</span>` : ''}
+                    </td>
+                    <td style="text-align:center;color:var(--muted)">${data.Pagi||'-'}</td>
+                    <td style="text-align:center;color:var(--muted)">${data.Middle||'-'}</td>
+                    <td style="text-align:center;color:var(--muted)">${data.Sore||'-'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>`;
+      });
+
+      container.innerHTML = html || '<div class="empty-state">Tidak ada data absensi</div>';
+    } catch(e) {
+      container.innerHTML = `<div class="empty-state">Error: ${e.message}</div>`;
+      console.error(e);
+    }
+  };
+</script>
+</body>
+</html>
