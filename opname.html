@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stock Opname — Kopi Telu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--brown:#92400e;--amber:#b45309;--light:#fffbf5;--card:#fff;--border:#e5d8c8;--text:#1c1410;--muted:#7a6652;--green:#059669;--red:#dc2626;--blue:#2563eb;--orange:#ea580c}
+    body{font-family:'DM Sans',sans-serif;background:var(--light);color:var(--text);min-height:100vh}
+    header{background:var(--brown);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px #92400e44}
+    .header-left{display:flex;align-items:center;gap:10px}
+    .logo{width:32px;height:32px;background:#78350f;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+    .app-name{font-family:'DM Serif Display',serif;font-size:17px}
+    .btn-link{color:#fcd34d;font-size:13px;cursor:pointer;background:none;border:none;text-decoration:none}
+    .user-badge{background:#78350f;padding:3px 10px;border-radius:99px;font-size:12px;color:#fff}
+    .page-nav{background:var(--card);border-bottom:1px solid var(--border);display:flex}
+    .nav-tab{padding:12px 16px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2.5px solid transparent;font-family:'DM Sans',sans-serif;white-space:nowrap}
+    .nav-tab.active{color:var(--brown);border-bottom-color:var(--brown)}
+    main{max-width:900px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:40px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px}
+    .card-title{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+    .form-group{margin-bottom:12px}
+    .form-group label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}
+    .form-group select,.form-group input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);background:#fafaf8;outline:none}
+    .form-group select:focus,.form-group input:focus{border-color:var(--amber)}
+    .btn-full{width:100%;padding:13px;font-size:14px;font-weight:700;border:none;border-radius:12px;cursor:pointer;font-family:'DM Sans',sans-serif;background:var(--brown);color:#fff}
+    .btn-full:hover{background:var(--amber)}
+    .btn-full:disabled{background:#d1b89a;cursor:not-allowed}
+    .btn-sm{border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+    .msg-error{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 12px;font-size:12px;color:var(--red);margin-bottom:10px;display:none}
+    .msg-success{background:#f0fdf4;border:1px solid #6ee7b7;border-radius:8px;padding:8px 12px;font-size:12px;color:var(--green);margin-bottom:10px;display:none}
+    .empty-state{text-align:center;padding:32px;color:var(--muted);font-size:13px}
+    /* Opname table */
+    .opname-table{width:100%;border-collapse:collapse;font-size:13px}
+    .opname-table th{text-align:left;padding:8px 10px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:2px solid var(--border);background:var(--light)}
+    .opname-table td{padding:10px;border-bottom:1px solid var(--border);vertical-align:middle}
+    .opname-table tr:last-child td{border-bottom:none}
+    .opname-input{width:90px;border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font-size:13px;font-family:'DM Sans',sans-serif;text-align:right}
+    .opname-input:focus{border-color:var(--amber);outline:none}
+    .selisih-plus{color:var(--green);font-weight:600}
+    .selisih-minus{color:var(--red);font-weight:600}
+    .selisih-zero{color:var(--muted)}
+    /* Riwayat */
+    .opname-card{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
+    .opname-card.pending{border-color:#fde68a;background:#fffbeb}
+    .opname-card.approved{border-color:#6ee7b7;background:#f0fdf4}
+    .badge{display:inline-block;font-size:10px;font-weight:600;padding:3px 8px;border-radius:99px}
+    .badge-pending{background:#fef3c7;color:#92400e}
+    .badge-approved{background:#d1fae5;color:#065f46}
+    @media(max-width:600px){main{padding:10px}.opname-table{font-size:12px}.opname-input{width:70px}}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo">☕</div>
+    <span class="app-name">Kopi Telu Report</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="user-badge" id="user-badge">-</span>
+    <a href="dashboard.html" id="link-dashboard" style="display:none" class="btn-link">📊 Dashboard</a>
+    <a href="inventori.html" class="btn-link">← Inventori</a>
+    <button class="btn-link" onclick="doLogout()">Keluar →</button>
+  </div>
+</header>
+
+<nav class="page-nav">
+  <button class="nav-tab active" onclick="switchTab('input')">📝 Input Opname</button>
+  <button class="nav-tab" onclick="switchTab('riwayat')">📋 Riwayat & Approval</button>
+</nav>
+
+<main>
+  <!-- ===== TAB INPUT ===== -->
+  <div id="tab-input">
+    <div>
+      <div style="font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:4px">📝 Stock Opname</div>
+      <div style="font-size:12px;color:var(--muted)">Hitung fisik stok dan bandingkan dengan catatan sistem</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Pilih Outlet & Periode</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group" style="margin-bottom:0">
+          <label>Outlet</label>
+          <select id="opname-outlet" onchange="loadStokOutlet()">
+            <option value="">-- Pilih Outlet --</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>Tanggal Opname</label>
+          <input type="date" id="opname-tanggal"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="msg-error" id="input-error"></div>
+    <div class="msg-success" id="input-success"></div>
+
+    <!-- Tabel opname -->
+    <div id="opname-table-wrap" style="display:none">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:13px;font-weight:600">Hitung Fisik Stok</div>
+          <div style="font-size:11px;color:var(--muted)">Isi kolom "Fisik" sesuai hitungan</div>
+        </div>
+        <table class="opname-table">
+          <thead>
+            <tr>
+              <th style="width:35%">Item</th>
+              <th style="text-align:right">Catatan Sistem</th>
+              <th style="text-align:right">Fisik (Hitung)</th>
+              <th style="text-align:right">Selisih</th>
+            </tr>
+          </thead>
+          <tbody id="opname-tbody"></tbody>
+        </table>
+      </div>
+      <button class="btn-full" id="btn-submit-opname" onclick="submitOpname()" style="margin-top:12px">
+        📝 Simpan Hasil Opname
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== TAB RIWAYAT ===== -->
+  <div id="tab-riwayat" style="display:none">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <select id="riwayat-outlet" onchange="loadRiwayat()" style="border:1.5px solid var(--border);border-radius:10px;padding:7px 12px;font-size:13px;font-family:'DM Sans',sans-serif;background:#fafaf8">
+        <option value="all">Semua Outlet</option>
+      </select>
+      <select id="riwayat-status" onchange="loadRiwayat()" style="border:1.5px solid var(--border);border-radius:10px;padding:7px 12px;font-size:13px;font-family:'DM Sans',sans-serif;background:#fafaf8">
+        <option value="all">Semua Status</option>
+        <option value="pending">⏳ Menunggu Approval</option>
+        <option value="approved">✅ Sudah Diapprove</option>
+      </select>
+    </div>
+    <div id="riwayat-list"><div class="empty-state">Memuat...</div></div>
+  </div>
+</main>
+
+<!-- Modal detail opname -->
+<div id="modal-detail" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeModal()">
+  <div style="background:var(--card);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto">
+    <div style="font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:4px" id="modal-title">Detail Opname</div>
+    <div id="modal-sub" style="font-size:12px;color:var(--muted);margin-bottom:16px"></div>
+    <div id="modal-content"></div>
+    <div id="modal-actions" style="margin-top:16px;display:flex;gap:10px">
+      <button onclick="closeModal()" style="flex:1;background:var(--light);border:1.5px solid var(--border);border-radius:10px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--muted)">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { Auth, OutletManager } from './js/auth.js';
+  import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+  import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+
+  const user = Auth.requireAuth('inventori');
+  if (!user) throw new Error();
+  document.getElementById('user-badge').textContent = user.nama;
+  window.doLogout = () => Auth.logout();
+  if (user.role === 'owner') document.getElementById('link-dashboard').style.display = 'inline';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAx4RfDW-UdkFf3m_wQuSdeptqssE7n2wU",
+    authDomain: "cafe-shift-report-70c6c.firebaseapp.com",
+    projectId: "cafe-shift-report-70c6c",
+    storageBucket: "cafe-shift-report-70c6c.firebasestorage.app",
+    messagingSenderId: "461174765046",
+    appId: "1:461174765046:web:660d43de856294644343d7"
+  };
+  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const isOwner = user.role === 'owner';
+  let allOutlets = [], outletMap = {};
+  let stokOutlet = [];
+  let currentOpnameId = null;
+
+  // Set tanggal hari ini
+  document.getElementById('opname-tanggal').value = new Date().toISOString().split('T')[0];
+
+  async function init() {
+    allOutlets = await OutletManager.getAll();
+    outletMap = Object.fromEntries(allOutlets.map(o => [o.id, o.nama]));
+
+    ['opname-outlet', 'riwayat-outlet'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      if (id === 'riwayat-outlet') sel.innerHTML = '<option value="all">Semua Outlet</option>';
+      allOutlets.forEach(o => {
+        const opt = document.createElement('option');
+        opt.value = o.id; opt.textContent = o.nama;
+        sel.appendChild(opt);
+      });
+    });
+  }
+  init();
+
+  // Load stok outlet untuk opname
+  window.loadStokOutlet = async function() {
+    const outlet = document.getElementById('opname-outlet').value;
+    if (!outlet) return;
+
+    const wrap = document.getElementById('opname-table-wrap');
+    wrap.style.display = 'none';
+
+    try {
+      const snap = await getDocs(query(collection(db, "stok_outlet"), where("outlet", "==", outlet)));
+      stokOutlet = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => a.itemNama?.localeCompare(b.itemNama));
+
+      if (!stokOutlet.length) {
+        document.getElementById('input-error').style.display = 'block';
+        document.getElementById('input-error').textContent = 'Belum ada stok di outlet ini.';
+        return;
+      }
+      document.getElementById('input-error').style.display = 'none';
+
+      const tbody = document.getElementById('opname-tbody');
+      tbody.innerHTML = stokOutlet.map((item, idx) => `
+        <tr id="opname-row-${idx}">
+          <td>
+            <div style="font-weight:600;font-size:13px">${item.itemNama}</div>
+            <div style="font-size:11px;color:var(--muted)">${item.satuan}</div>
+          </td>
+          <td style="text-align:right;font-weight:600">${item.stok} <span style="font-size:11px;color:var(--muted)">${item.satuan}</span></td>
+          <td style="text-align:right">
+            <input class="opname-input" type="number" id="fisik-${idx}" 
+              placeholder="${item.stok}" min="0" step="0.1"
+              oninput="hitungSelisih(${idx}, ${item.stok})"/>
+          </td>
+          <td style="text-align:right" id="selisih-${idx}">
+            <span class="selisih-zero">—</span>
+          </td>
+        </tr>`).join('');
+
+      wrap.style.display = 'block';
+    } catch(e) {
+      document.getElementById('input-error').style.display = 'block';
+      document.getElementById('input-error').textContent = 'Error: ' + e.message;
+    }
+  };
+
+  window.hitungSelisih = function(idx, sistemStok) {
+    const fisikEl = document.getElementById(`fisik-${idx}`);
+    const selisihEl = document.getElementById(`selisih-${idx}`);
+    const fisik = parseFloat(fisikEl.value);
+    if (isNaN(fisik)) { selisihEl.innerHTML = '<span class="selisih-zero">—</span>'; return; }
+    const selisih = fisik - sistemStok;
+    const item = stokOutlet[idx];
+    if (selisih === 0) {
+      selisihEl.innerHTML = `<span class="selisih-zero">✅ 0</span>`;
+    } else if (selisih > 0) {
+      selisihEl.innerHTML = `<span class="selisih-plus">+${selisih} ${item.satuan}</span>`;
+    } else {
+      selisihEl.innerHTML = `<span class="selisih-minus">${selisih} ${item.satuan}</span>`;
+    }
+  };
+
+  window.submitOpname = async function() {
+    const outlet   = document.getElementById('opname-outlet').value;
+    const tanggal  = document.getElementById('opname-tanggal').value;
+    const errEl    = document.getElementById('input-error');
+    const succEl   = document.getElementById('input-success');
+    errEl.style.display = 'none'; succEl.style.display = 'none';
+
+    if (!outlet || !tanggal) { errEl.style.display='block'; errEl.textContent='Pilih outlet dan tanggal!'; return; }
+
+    // Kumpulkan hasil opname
+    const items = stokOutlet.map((item, idx) => {
+      const fisikEl = document.getElementById(`fisik-${idx}`);
+      const fisik   = fisikEl.value !== '' ? parseFloat(fisikEl.value) : null;
+      const selisih = fisik !== null ? fisik - item.stok : null;
+      return {
+        itemId: item.itemId, itemNama: item.itemNama, satuan: item.satuan,
+        stokSistem: item.stok, stokFisik: fisik, selisih,
+        stokOutletId: item.id
+      };
+    }).filter(i => i.stokFisik !== null); // Hanya yang diisi
+
+    if (!items.length) {
+      errEl.style.display='block'; errEl.textContent='Isi minimal 1 item!'; return;
+    }
+
+    const btn = document.getElementById('btn-submit-opname');
+    btn.disabled = true; btn.textContent = '⏳ Menyimpan...';
+
+    try {
+      const now = new Date();
+      await addDoc(collection(db, "opname"), {
+        outlet, outletNama: outletMap[outlet]||outlet, tanggal,
+        items, status: 'pending',
+        inputBy: user.nama,
+        createdAt: now.toISOString(),
+        createdAtWIB: now.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour12: false })
+      });
+
+      succEl.style.display = 'block';
+      succEl.textContent = '✅ Opname berhasil disimpan! Menunggu approval owner.';
+      document.getElementById('opname-table-wrap').style.display = 'none';
+      document.getElementById('opname-outlet').value = '';
+    } catch(e) {
+      errEl.style.display='block'; errEl.textContent='Error: '+e.message;
+    } finally { btn.disabled=false; btn.textContent='📝 Simpan Hasil Opname'; }
+  };
+
+  // ===== RIWAYAT =====
+  window.loadRiwayat = async function() {
+    const outletFilter = document.getElementById('riwayat-outlet').value;
+    const statusFilter = document.getElementById('riwayat-status').value;
+    const list = document.getElementById('riwayat-list');
+    list.innerHTML = '<div class="empty-state">⏳ Memuat...</div>';
+
+    try {
+      const snap = await getDocs(query(collection(db, "opname"), orderBy("createdAt", "desc")));
+      let opnames = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (outletFilter !== 'all') opnames = opnames.filter(o => o.outlet === outletFilter);
+      if (statusFilter !== 'all') opnames = opnames.filter(o => o.status === statusFilter);
+
+      if (!opnames.length) { list.innerHTML = '<div class="empty-state">Belum ada riwayat opname</div>'; return; }
+
+      list.innerHTML = opnames.map(o => {
+        const adaSelisih = o.items.some(i => i.selisih !== 0 && i.selisih !== null);
+        const jumlahSelisih = o.items.filter(i => i.selisih !== 0 && i.selisih !== null).length;
+        return `<div class="opname-card ${o.status}" onclick="showDetail('${o.id}')" style="cursor:pointer">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div style="font-size:14px;font-weight:600">${o.outletNama}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">
+                📅 ${o.tanggal?.split('-').reverse().join('/')} · 👤 ${o.inputBy} · 🕐 ${o.createdAtWIB||'-'}
+              </div>
+              <div style="font-size:12px;margin-top:6px">
+                ${adaSelisih 
+                  ? `<span style="color:var(--red)">⚠️ ${jumlahSelisih} item selisih dari ${o.items.length} item diopname</span>`
+                  : `<span style="color:var(--green)">✅ Semua sesuai (${o.items.length} item)</span>`}
+              </div>
+            </div>
+            <div style="text-align:right">
+              <span class="badge badge-${o.status}">${o.status==='approved'?'✅ Approved':'⏳ Pending'}</span>
+              ${o.approvedBy ? `<div style="font-size:10px;color:var(--muted);margin-top:4px">oleh ${o.approvedBy}</div>` : ''}
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    } catch(e) { list.innerHTML = `<div class="empty-state">Error: ${e.message}</div>`; }
+  };
+
+  window.showDetail = async function(id) {
+    const snap = await getDocs(query(collection(db, "opname")));
+    const opname = snap.docs.map(d=>({id:d.id,...d.data()})).find(o=>o.id===id);
+    if (!opname) return;
+    currentOpnameId = id;
+
+    document.getElementById('modal-title').textContent = `Opname — ${opname.outletNama}`;
+    document.getElementById('modal-sub').textContent = `${opname.tanggal?.split('-').reverse().join('/')} · ${opname.inputBy} · ${opname.createdAtWIB||'-'}`;
+
+    const tabel = `
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px">
+        <thead>
+          <tr style="border-bottom:2px solid var(--border)">
+            <th style="text-align:left;padding:7px 8px;font-size:11px;color:var(--muted)">Item</th>
+            <th style="text-align:right;padding:7px 8px;font-size:11px;color:var(--muted)">Sistem</th>
+            <th style="text-align:right;padding:7px 8px;font-size:11px;color:var(--muted)">Fisik</th>
+            <th style="text-align:right;padding:7px 8px;font-size:11px;color:var(--muted)">Selisih</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${opname.items.map(i => {
+            const s = i.selisih;
+            const selisihHtml = s === 0 ? `<span style="color:var(--muted)">✅ 0</span>`
+              : s > 0 ? `<span style="color:var(--green);font-weight:600">+${s} ${i.satuan}</span>`
+              : `<span style="color:var(--red);font-weight:600">${s} ${i.satuan}</span>`;
+            return `<tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:8px">${i.itemNama}</td>
+              <td style="text-align:right;padding:8px">${i.stokSistem} ${i.satuan}</td>
+              <td style="text-align:right;padding:8px">${i.stokFisik} ${i.satuan}</td>
+              <td style="text-align:right;padding:8px">${selisihHtml}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+
+    document.getElementById('modal-content').innerHTML = tabel;
+
+    // Tombol approve hanya untuk owner dan status pending
+    const actions = document.getElementById('modal-actions');
+    if (isOwner && opname.status === 'pending') {
+      actions.innerHTML = `
+        <button onclick="closeModal()" style="flex:1;background:var(--light);border:1.5px solid var(--border);border-radius:10px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--muted)">Tutup</button>
+        <button onclick="approveOpname('${id}')" style="flex:2;background:var(--green);color:#fff;border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">✅ Approve & Update Stok</button>`;
+    } else {
+      actions.innerHTML = `<button onclick="closeModal()" style="flex:1;background:var(--light);border:1.5px solid var(--border);border-radius:10px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--muted)">Tutup</button>`;
+    }
+
+    document.getElementById('modal-detail').style.display = 'flex';
+  };
+
+  window.approveOpname = async function(id) {
+    if (!confirm('Approve opname ini? Stok outlet akan diupdate sesuai hasil hitung fisik.')) return;
+    try {
+      const snap = await getDocs(query(collection(db, "opname")));
+      const opname = snap.docs.map(d=>({id:d.id,...d.data()})).find(o=>o.id===id);
+      const now = new Date();
+      const waktuWIB = now.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour12: false });
+
+      // Update stok outlet sesuai fisik
+      for (const item of opname.items) {
+        if (item.stokFisik === null || item.stokOutletId === undefined) continue;
+
+        // Cari stok outlet
+        const stokSnap = await getDocs(query(
+          collection(db, "stok_outlet"),
+          where("outlet", "==", opname.outlet),
+          where("itemId", "==", item.itemId)
+        ));
+        if (!stokSnap.empty) {
+          await updateDoc(doc(db, "stok_outlet", stokSnap.docs[0].id), {
+            stok: item.stokFisik, updatedAt: now.toISOString()
+          });
+        }
+
+        // Log koreksi
+        if (item.selisih !== 0) {
+          await addDoc(collection(db, "stok_outlet_log"), {
+            type: 'koreksi_opname',
+            outlet: opname.outlet, outletNama: opname.outletNama,
+            itemId: item.itemId, itemNama: item.itemNama, satuan: item.satuan,
+            jumlah: Math.abs(item.selisih),
+            selisih: item.selisih,
+            stokSebelum: item.stokSistem, stokSesudah: item.stokFisik,
+            opnameId: id, inputBy: user.nama,
+            createdAt: now.toISOString(), createdAtWIB: waktuWIB
+          });
+        }
+      }
+
+      // Update status opname
+      await updateDoc(doc(db, "opname", id), {
+        status: 'approved',
+        approvedBy: user.nama,
+        approvedAt: now.toISOString(),
+        approvedAtWIB: waktuWIB
+      });
+
+      closeModal();
+      loadRiwayat();
+      alert('✅ Opname diapprove! Stok outlet sudah diupdate.');
+    } catch(e) { alert('Gagal approve: ' + e.message); }
+  };
+
+  window.closeModal = () => { document.getElementById('modal-detail').style.display = 'none'; };
+
+  window.switchTab = (tab) => {
+    ['input','riwayat'].forEach(t => {
+      document.getElementById('tab-'+t).style.display = t===tab?'flex':'none';
+      if (t===tab) document.getElementById('tab-'+t).style.flexDirection='column';
+    });
+    document.querySelectorAll('.nav-tab').forEach((el,i) => {
+      el.classList.toggle('active', ['input','riwayat'][i]===tab);
+    });
+    if (tab==='riwayat') loadRiwayat();
+  };
+</script>
+</body>
+</html>
