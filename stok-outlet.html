@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stok Outlet — Kopi Telu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--brown:#92400e;--amber:#b45309;--light:#fffbf5;--card:#fff;--border:#e5d8c8;--text:#1c1410;--muted:#7a6652;--green:#059669;--red:#dc2626;--blue:#2563eb;--orange:#ea580c}
+    body{font-family:'DM Sans',sans-serif;background:var(--light);color:var(--text);min-height:100vh}
+    header{background:var(--brown);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px #92400e44}
+    .header-left{display:flex;align-items:center;gap:10px}
+    .logo{width:32px;height:32px;background:#78350f;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+    .app-name{font-family:'DM Serif Display',serif;font-size:17px}
+    .btn-link{color:#fcd34d;font-size:13px;cursor:pointer;background:none;border:none;text-decoration:none}
+    .user-badge{background:#78350f;padding:3px 10px;border-radius:99px;font-size:12px;color:#fff}
+    main{max-width:900px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:40px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px}
+    .card-title{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+    /* Tab nav */
+    .page-nav{background:var(--card);border-bottom:1px solid var(--border);display:flex;overflow-x:auto}
+    .nav-tab{padding:12px 16px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2.5px solid transparent;font-family:'DM Sans',sans-serif;white-space:nowrap}
+    .nav-tab.active{color:var(--brown);border-bottom-color:var(--brown)}
+    /* Outlet selector */
+    .outlet-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+    .outlet-tab{padding:6px 14px;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--light);color:var(--muted);font-family:'DM Sans',sans-serif}
+    .outlet-tab.active{background:var(--brown);color:#fff;border-color:var(--brown)}
+    /* Item rows */
+    .item-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border)}
+    .item-row:last-child{border-bottom:none}
+    .item-row:hover{background:var(--light)}
+    .item-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+    .item-nama{font-size:14px;font-weight:600}
+    .item-meta{font-size:11px;color:var(--muted);margin-top:2px}
+    .stok-val{font-family:'DM Serif Display',serif;font-size:18px;font-weight:600}
+    .badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px}
+    .badge-ok{background:#d1fae5;color:#065f46}
+    .badge-warn{background:#fef3c7;color:#92400e}
+    .badge-critical{background:#fef2f2;color:#991b1b}
+    .btn-sm{border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+    .btn-primary{background:var(--brown);color:#fff}
+    .btn-secondary{background:var(--light);border:1.5px solid var(--border);color:var(--text)}
+    /* Modal */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center}
+    .modal-overlay.show{display:flex}
+    @media(min-width:560px){.modal-overlay{align-items:center}}
+    .modal{background:var(--card);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+    @media(min-width:560px){.modal{border-radius:20px}}
+    .modal-title{font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:16px}
+    .form-group{margin-bottom:12px}
+    .form-group label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}
+    .form-group input,.form-group select,.form-group textarea{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);background:#fafaf8;outline:none}
+    .form-group input:focus,.form-group select:focus{border-color:var(--amber)}
+    .btn-full{width:100%;padding:13px;font-size:14px;font-weight:700;border:none;border-radius:12px;cursor:pointer;font-family:'DM Sans',sans-serif;background:var(--brown);color:#fff;margin-top:4px}
+    .btn-full:hover{background:var(--amber)}
+    .btn-full:disabled{background:#d1b89a;cursor:not-allowed}
+    .msg-error{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 12px;font-size:12px;color:var(--red);margin-bottom:10px;display:none}
+    .msg-success{background:#f0fdf4;border:1px solid #6ee7b7;border-radius:8px;padding:8px 12px;font-size:12px;color:var(--green);margin-bottom:10px;display:none}
+    .empty-state{text-align:center;padding:32px;color:var(--muted);font-size:13px}
+    @media(max-width:600px){main{padding:10px}.card{padding:12px}}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo">☕</div>
+    <span class="app-name">Kopi Telu Report</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="user-badge" id="user-badge">-</span>
+    <a href="dashboard.html" id="link-dashboard" style="display:none" class="btn-link">📊 Dashboard</a>
+    <a href="home.html" id="link-menu" style="display:none" class="btn-link">← Menu</a>
+    <button class="btn-link" onclick="doLogout()">Keluar →</button>
+  </div>
+</header>
+
+<nav class="page-nav">
+  <button class="nav-tab active" onclick="switchTab('stok')">📦 Stok Outlet</button>
+  <button class="nav-tab" onclick="switchTab('masuk')">📥 Stok Masuk</button>
+  <button class="nav-tab" onclick="switchTab('log')">📋 Riwayat</button>
+</nav>
+
+<main>
+  <!-- ===== TAB STOK ===== -->
+  <div id="tab-stok">
+    <div>
+      <div style="font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:4px">📦 Stok Outlet</div>
+      <div style="font-size:12px;color:var(--muted)">Stok bahan baku di masing-masing outlet</div>
+    </div>
+
+    <!-- Outlet selector (hanya untuk owner) -->
+    <div id="outlet-selector" style="display:none">
+      <div class="outlet-tabs" id="outlet-tabs"></div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <input type="text" id="search-stok" placeholder="🔍 Cari item..." oninput="filterStok()"
+        style="flex:1;min-width:160px;border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;background:#fafaf8"/>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden">
+      <div id="stok-list"><div class="empty-state">Memuat...</div></div>
+    </div>
+  </div>
+
+  <!-- ===== TAB STOK MASUK ===== -->
+  <div id="tab-masuk" style="display:none">
+    <div class="card">
+      <div class="card-title">📥 Stok Masuk Langsung (Beli di Outlet)</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">
+        Untuk barang yang dibeli langsung di outlet tanpa melalui gudang pusat.
+      </div>
+      <div class="msg-error" id="masuk-error"></div>
+      <div class="msg-success" id="masuk-success"></div>
+
+      <!-- Outlet selector kalau owner -->
+      <div class="form-group" id="masuk-outlet-group" style="display:none">
+        <label>Outlet</label>
+        <select id="masuk-outlet"></select>
+      </div>
+
+      <div class="form-group">
+        <label>Item / Bahan</label>
+        <select id="masuk-item">
+          <option value="">-- Pilih Item --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Jumlah Masuk</label>
+        <input type="number" id="masuk-jumlah" placeholder="0" min="0" step="0.1"/>
+      </div>
+      <div class="form-group">
+        <label>Keterangan</label>
+        <input type="text" id="masuk-catatan" placeholder="Contoh: Beli di supplier lokal, nama toko, dll"/>
+      </div>
+      <button class="btn-full" id="btn-masuk" onclick="submitStokMasuk()">📥 Simpan Stok Masuk</button>
+    </div>
+  </div>
+
+  <!-- ===== TAB LOG ===== -->
+  <div id="tab-log" style="display:none">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <select id="log-outlet-filter" style="border:1.5px solid var(--border);border-radius:10px;padding:7px 12px;font-size:13px;font-family:'DM Sans',sans-serif;background:#fafaf8" onchange="loadLog()">
+        <option value="all">Semua Outlet</option>
+      </select>
+      <select id="log-type-filter" style="border:1.5px solid var(--border);border-radius:10px;padding:7px 12px;font-size:13px;font-family:'DM Sans',sans-serif;background:#fafaf8" onchange="loadLog()">
+        <option value="all">Semua Tipe</option>
+        <option value="masuk_kiriman">📦 Kiriman Gudang</option>
+        <option value="masuk_langsung">🛒 Beli Langsung</option>
+        <option value="pemakaian">☕ Pemakaian (ESB)</option>
+      </select>
+    </div>
+    <div id="log-list"><div class="empty-state">Memuat...</div></div>
+  </div>
+</main>
+
+<script type="module">
+  import { Auth, OutletManager } from './js/auth.js';
+  import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+  import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, query, where, orderBy } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+
+  const user = Auth.requireAuth();
+  if (!user) throw new Error();
+  document.getElementById('user-badge').textContent = user.nama;
+  window.doLogout = () => Auth.logout();
+  if (user.role === 'owner') document.getElementById('link-dashboard').style.display = 'inline';
+  else document.getElementById('link-menu').style.display = 'inline';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAx4RfDW-UdkFf3m_wQuSdeptqssE7n2wU",
+    authDomain: "cafe-shift-report-70c6c.firebaseapp.com",
+    projectId: "cafe-shift-report-70c6c",
+    storageBucket: "cafe-shift-report-70c6c.firebasestorage.app",
+    messagingSenderId: "461174765046",
+    appId: "1:461174765046:web:660d43de856294644343d7"
+  };
+  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  let allOutlets = [], outletMap = {}, allItems = [];
+  let selectedOutlet = null;
+  let allStok = [];
+
+  // Tentukan outlet yang bisa dilihat
+  const isOwner = user.role === 'owner';
+  const myOutlets = user.outlets || (user.outlet ? [user.outlet] : []);
+  const mySelected = user.selectedOutlet || myOutlets[0];
+
+  async function init() {
+    allOutlets = await OutletManager.getAll();
+    outletMap = Object.fromEntries(allOutlets.map(o => [o.id, o.nama]));
+
+    // Load items
+    const itemSnap = await getDocs(query(collection(db, "inventori"), orderBy("nama")));
+    allItems = itemSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // Populate item select
+    const itemSel = document.getElementById('masuk-item');
+    allItems.forEach(i => {
+      const opt = document.createElement('option');
+      opt.value = i.id; opt.textContent = `${i.nama} (${i.satuan})`;
+      itemSel.appendChild(opt);
+    });
+
+    // Setup outlet tabs
+    const viewOutlets = isOwner ? allOutlets : allOutlets.filter(o => myOutlets.includes(o.id));
+
+    if (isOwner || myOutlets.length > 1) {
+      document.getElementById('outlet-selector').style.display = 'block';
+      const tabsEl = document.getElementById('outlet-tabs');
+      viewOutlets.forEach((o, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'outlet-tab' + (idx === 0 ? ' active' : '');
+        btn.textContent = o.nama;
+        btn.onclick = () => {
+          document.querySelectorAll('.outlet-tab').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          selectedOutlet = o.id;
+          loadStok();
+        };
+        tabsEl.appendChild(btn);
+      });
+      selectedOutlet = viewOutlets[0]?.id;
+    } else {
+      selectedOutlet = mySelected;
+    }
+
+    // Setup outlet untuk stok masuk
+    if (isOwner) {
+      document.getElementById('masuk-outlet-group').style.display = 'block';
+      const masukSel = document.getElementById('masuk-outlet');
+      allOutlets.forEach(o => {
+        const opt = document.createElement('option');
+        opt.value = o.id; opt.textContent = o.nama;
+        masukSel.appendChild(opt);
+      });
+    }
+
+    // Setup log outlet filter
+    const logSel = document.getElementById('log-outlet-filter');
+    viewOutlets.forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o.id; opt.textContent = o.nama;
+      logSel.appendChild(opt);
+    });
+
+    await loadStok();
+  }
+  init();
+
+  // Load stok outlet
+  async function loadStok() {
+    const list = document.getElementById('stok-list');
+    list.innerHTML = '<div class="empty-state">⏳ Memuat...</div>';
+    if (!selectedOutlet) { list.innerHTML = '<div class="empty-state">Pilih outlet dulu</div>'; return; }
+
+    try {
+      const snap = await getDocs(query(
+        collection(db, "stok_outlet"),
+        where("outlet", "==", selectedOutlet),
+        orderBy("itemNama")
+      ));
+      allStok = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderStok(allStok);
+    } catch(e) {
+      // Kalau butuh index, coba tanpa orderBy
+      try {
+        const snap2 = await getDocs(query(collection(db, "stok_outlet"), where("outlet", "==", selectedOutlet)));
+        allStok = snap2.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => a.itemNama?.localeCompare(b.itemNama));
+        renderStok(allStok);
+      } catch(e2) {
+        list.innerHTML = `<div class="empty-state">Error: ${e2.message}</div>`;
+      }
+    }
+  }
+
+  function getStatus(item) {
+    // Cari stok minimum dari inventori gudang
+    const gudangItem = allItems.find(i => i.id === item.itemId);
+    const minStok = gudangItem?.minStok || 0;
+    if (item.stok <= 0) return 'critical';
+    if (minStok > 0 && item.stok <= minStok) return 'warn';
+    return 'ok';
+  }
+
+  function renderStok(list) {
+    const el = document.getElementById('stok-list');
+    const outletNama = outletMap[selectedOutlet] || selectedOutlet;
+    if (!list.length) {
+      el.innerHTML = `<div class="empty-state">Belum ada stok di ${outletNama}.<br/>Stok akan bertambah saat konfirmasi kiriman dari gudang.</div>`;
+      return;
+    }
+    // Sort: critical dulu
+    const sorted = [...list].sort((a,b) => {
+      const order = { critical:0, warn:1, ok:2 };
+      return order[getStatus(a)] - order[getStatus(b)];
+    });
+    el.innerHTML = sorted.map(item => {
+      const status = getStatus(item);
+      const icon = status === 'critical' ? '🔴' : status === 'warn' ? '🟡' : '🟢';
+      const color = status === 'critical' ? 'var(--red)' : status === 'warn' ? 'var(--orange)' : 'var(--green)';
+      const badgeClass = status === 'critical' ? 'badge-critical' : status === 'warn' ? 'badge-warn' : 'badge-ok';
+      const badgeText = status === 'critical' ? 'Habis' : status === 'warn' ? 'Menipis' : 'Aman';
+      return `<div class="item-row">
+        <div class="item-icon" style="background:${status==='critical'?'#fef2f2':status==='warn'?'#fffbeb':'#f0fdf4'}">${icon}</div>
+        <div class="item-info" style="flex:1">
+          <div class="item-nama">${item.itemNama}</div>
+          <div class="item-meta">Update: ${item.updatedAt ? new Date(item.updatedAt).toLocaleDateString('id-ID') : '-'}</div>
+        </div>
+        <span class="badge ${badgeClass}">${badgeText}</span>
+        <div style="text-align:right;min-width:80px">
+          <div class="stok-val" style="color:${color}">${item.stok}</div>
+          <div style="font-size:11px;color:var(--muted)">${item.satuan}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  window.filterStok = () => {
+    const q = document.getElementById('search-stok').value.toLowerCase();
+    renderStok(allStok.filter(i => i.itemNama?.toLowerCase().includes(q)));
+  };
+
+  // Stok masuk langsung
+  window.submitStokMasuk = async () => {
+    const outlet = isOwner ? document.getElementById('masuk-outlet').value : mySelected;
+    const itemId = document.getElementById('masuk-item').value;
+    const jumlah = parseFloat(document.getElementById('masuk-jumlah').value) || 0;
+    const catatan = document.getElementById('masuk-catatan').value.trim();
+    const errEl = document.getElementById('masuk-error');
+    const succEl = document.getElementById('masuk-success');
+    errEl.style.display = 'none'; succEl.style.display = 'none';
+
+    if (!outlet) { errEl.style.display='block'; errEl.textContent='Pilih outlet!'; return; }
+    if (!itemId) { errEl.style.display='block'; errEl.textContent='Pilih item!'; return; }
+    if (jumlah <= 0) { errEl.style.display='block'; errEl.textContent='Jumlah harus lebih dari 0!'; return; }
+
+    const btn = document.getElementById('btn-masuk');
+    btn.disabled = true; btn.textContent = '⏳ Menyimpan...';
+
+    try {
+      const item = allItems.find(i => i.id === itemId);
+      const now = new Date();
+      const waktuWIB = now.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour12: false });
+
+      // Cek stok outlet existing
+      const stokSnap = await getDocs(query(
+        collection(db, "stok_outlet"),
+        where("outlet", "==", outlet),
+        where("itemId", "==", itemId)
+      ));
+
+      if (stokSnap.empty) {
+        await addDoc(collection(db, "stok_outlet"), {
+          outlet, outletNama: outletMap[outlet]||outlet,
+          itemId, itemNama: item.nama, satuan: item.satuan,
+          stok: jumlah, updatedAt: now.toISOString()
+        });
+      } else {
+        const existing = stokSnap.docs[0];
+        const stokLama = existing.data().stok || 0;
+        await updateDoc(doc(db, "stok_outlet", existing.id), {
+          stok: stokLama + jumlah, updatedAt: now.toISOString()
+        });
+      }
+
+      // Log
+      await addDoc(collection(db, "stok_outlet_log"), {
+        type: 'masuk_langsung',
+        outlet, outletNama: outletMap[outlet]||outlet,
+        itemId, itemNama: item.nama, satuan: item.satuan,
+        jumlah, catatan, inputBy: user.nama,
+        createdAt: now.toISOString(), createdAtWIB: waktuWIB
+      });
+
+      document.getElementById('masuk-jumlah').value = '';
+      document.getElementById('masuk-catatan').value = '';
+      document.getElementById('masuk-item').value = '';
+      succEl.style.display = 'block'; succEl.textContent = `✅ Stok ${item.nama} berhasil ditambahkan!`;
+      if (selectedOutlet === outlet) await loadStok();
+    } catch(e) { errEl.style.display='block'; errEl.textContent='Error: '+e.message; }
+    finally { btn.disabled=false; btn.textContent='📥 Simpan Stok Masuk'; }
+  };
+
+  // Load log
+  window.loadLog = async () => {
+    const outletFilter = document.getElementById('log-outlet-filter').value;
+    const typeFilter   = document.getElementById('log-type-filter').value;
+    const list = document.getElementById('log-list');
+    list.innerHTML = '<div class="empty-state">⏳ Memuat...</div>';
+
+    try {
+      let constraints = [orderBy("createdAt", "desc")];
+      const viewOutlets = isOwner ? allOutlets.map(o=>o.id) : myOutlets;
+
+      const snap = await getDocs(query(collection(db, "stok_outlet_log"), ...constraints));
+      let logs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .filter(l => viewOutlets.includes(l.outlet));
+
+      if (outletFilter !== 'all') logs = logs.filter(l => l.outlet === outletFilter);
+      if (typeFilter !== 'all')   logs = logs.filter(l => l.type === typeFilter);
+
+      if (!logs.length) { list.innerHTML = '<div class="empty-state">Belum ada riwayat</div>'; return; }
+
+      const typeLabel = { masuk_kiriman:'📦 Kiriman Gudang', masuk_langsung:'🛒 Beli Langsung', pemakaian:'☕ Pemakaian ESB' };
+      const typeColor = { masuk_kiriman:'var(--green)', masuk_langsung:'var(--blue)', pemakaian:'var(--orange)' };
+
+      list.innerHTML = logs.slice(0, 50).map(l => `
+        <div class="card" style="margin-bottom:8px;padding:12px 14px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600">${l.itemNama}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">${outletMap[l.outlet]||l.outlet} · ${l.createdAtWIB||'-'} · ${l.inputBy||'-'}</div>
+              ${l.catatan?`<div style="font-size:11px;color:var(--muted);font-style:italic;margin-top:2px">📝 ${l.catatan}</div>`:''}
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-size:13px;font-weight:700;color:${typeColor[l.type]||'var(--muted)'}">
+                ${l.type==='pemakaian'?'-':'+'}${l.jumlah} ${l.satuan}
+              </div>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px">${typeLabel[l.type]||l.type}</div>
+            </div>
+          </div>
+        </div>`).join('');
+    } catch(e) { list.innerHTML = `<div class="empty-state">Error: ${e.message}</div>`; }
+  };
+
+  window.switchTab = (tab) => {
+    ['stok','masuk','log'].forEach(t => {
+      document.getElementById('tab-'+t).style.display = t===tab?'flex':'none';
+      if (t===tab) document.getElementById('tab-'+t).style.flexDirection='column';
+    });
+    document.querySelectorAll('.nav-tab').forEach((el,i) => {
+      el.classList.toggle('active', ['stok','masuk','log'][i]===tab);
+    });
+    if (tab==='log') loadLog();
+    if (tab==='stok') loadStok();
+  };
+</script>
+</body>
+</html>
