@@ -122,6 +122,16 @@
     <div class="menu-arrow">›</div>
   </a>
 
+  <a href="master-item.html" class="menu-card" id="menu-master-item" style="display:none">
+    <div class="menu-icon" style="background:#ede9fe">📋</div>
+    <div class="menu-info">
+      <div class="menu-title">Master Item</div>
+      <div class="menu-desc">Kelola daftar semua bahan baku</div>
+      <span class="menu-badge" style="background:#ede9fe;color:#5b21b6">Gudang</span>
+    </div>
+    <div class="menu-arrow">›</div>
+  </a>
+
   <a href="stok-outlet.html" class="menu-card" id="menu-stok-outlet" style="display:none">
     <div class="menu-icon" style="background:#d1fae5">📦</div>
     <div class="menu-info">
@@ -160,9 +170,10 @@
   const timeGreet = hour < 11 ? '🌅 Selamat Pagi' : hour < 15 ? '☀️ Selamat Siang' : hour < 18 ? '🌆 Selamat Sore' : '🌙 Selamat Malam';
   document.querySelector('.greeting-hello').textContent = timeGreet + ',';
 
-  // Tampilkan menu inventori kalau punya akses gudang
+  // Tampilkan menu inventori dan master item kalau punya akses gudang
   if (user.aksesGudang || user.role === 'gudang') {
     document.getElementById('menu-inventori').style.display = 'flex';
+    document.getElementById('menu-master-item').style.display = 'flex';
   }
   // Stok outlet bisa dilihat semua pegawai
   document.getElementById('menu-stok-outlet').style.display = 'flex';
