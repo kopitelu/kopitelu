@@ -872,7 +872,7 @@
       if (!allResep.length) await loadResep();
 
       // Kalkulasi pemakaian bahan
-      const pemakaian = {}; // { itemId: { itemNama, satuan, jumlah } }
+      const pemakaian = {};
       const noResep = [];
 
       Object.entries(penjualan).forEach(([menu, qty]) => {
@@ -884,31 +884,47 @@
         });
       });
 
+      // Ambil stok outlet untuk outlet yang dipilih
+      const stokOutletSnap = await getDocs(query(
+        collection(db, "stok_outlet"),
+        where("outlet", "==", outlet)
+      ));
+      const stokOutletMap = {};
+      stokOutletSnap.docs.forEach(d => {
+        const data = d.data();
+        stokOutletMap[data.itemId] = data.stok || 0;
+      });
+
       // Tampilkan hasil
       esbData = { outlet, periodeInfo, penjualan, pemakaian, noResep };
       document.getElementById('esb-periode').textContent = `Periode: ${periodeInfo} · Outlet: ${outletMap[outlet]||outlet} · ${Object.keys(penjualan).length} menu · ${Object.keys(pemakaian).length} bahan terhitung`;
 
-      // Tabel pemakaian
+      // Tabel pemakaian vs stok outlet
       const tabelHtml = `
         <table style="width:100%;border-collapse:collapse;font-size:13px">
           <thead>
             <tr style="border-bottom:2px solid var(--border)">
               <th style="text-align:left;padding:8px;font-size:11px;color:var(--muted)">Bahan</th>
               <th style="text-align:right;padding:8px;font-size:11px;color:var(--muted)">Total Pemakaian</th>
-              <th style="text-align:right;padding:8px;font-size:11px;color:var(--muted)">Stok Gudang</th>
+              <th style="text-align:right;padding:8px;font-size:11px;color:var(--muted)">Stok Outlet</th>
               <th style="text-align:right;padding:8px;font-size:11px;color:var(--muted)">Status</th>
             </tr>
           </thead>
           <tbody>
             ${Object.entries(pemakaian).map(([itemId, p]) => {
-              const item = allItems.find(i => i.id === itemId);
-              const stok = item?.stok || 0;
-              const cukup = stok >= p.jumlah;
+              const stokOutlet = stokOutletMap[itemId] ?? null;
+              const cukup = stokOutlet !== null ? stokOutlet >= p.jumlah : null;
+              const stokText = stokOutlet !== null ? `${stokOutlet} ${p.satuan}` : '-';
+              const statusHtml = cukup === null
+                ? `<span style="color:var(--muted)">— Belum ada stok</span>`
+                : cukup
+                  ? `<span style="color:var(--green);font-weight:600">✅ Cukup</span>`
+                  : `<span style="color:var(--red);font-weight:600">🚨 Kurang ${(p.jumlah - stokOutlet).toFixed(2)} ${p.satuan}</span>`;
               return `<tr style="border-bottom:1px solid var(--border)">
                 <td style="padding:8px;font-weight:500">${p.itemNama}</td>
                 <td style="padding:8px;text-align:right">${p.jumlah.toFixed(2)} ${p.satuan}</td>
-                <td style="padding:8px;text-align:right;color:var(--muted)">${stok} ${p.satuan}</td>
-                <td style="padding:8px;text-align:right;font-weight:600;color:${cukup?'var(--green)':'var(--red)'}">${cukup?'✅ Cukup':'🚨 Kurang'}</td>
+                <td style="padding:8px;text-align:right;color:var(--muted)">${stokText}</td>
+                <td style="padding:8px;text-align:right">${statusHtml}</td>
               </tr>`;
             }).join('')}
           </tbody>
