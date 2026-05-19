@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard Keuangan — Kopi Telu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--brown:#92400e;--amber:#b45309;--light:#fffbf5;--card:#fff;--border:#e5d8c8;--text:#1c1410;--muted:#7a6652;--green:#059669;--red:#dc2626;--blue:#2563eb;--orange:#ea580c}
+    body{font-family:'DM Sans',sans-serif;background:var(--light);color:var(--text);min-height:100vh}
+    header{background:var(--brown);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px #92400e44}
+    .header-left{display:flex;align-items:center;gap:10px}
+    .logo{width:32px;height:32px;background:#78350f;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+    .app-name{font-family:'DM Serif Display',serif;font-size:17px}
+    .btn-link{color:#fcd34d;font-size:13px;cursor:pointer;background:none;border:none;text-decoration:none}
+    .user-badge{background:#78350f;padding:3px 10px;border-radius:99px;font-size:12px;color:#fff}
+    main{max-width:900px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:40px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px}
+    .card-title{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+    .menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+    .menu-card{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:18px;text-align:center;text-decoration:none;color:var(--text);cursor:pointer;transition:all .15s}
+    .menu-card:hover{border-color:var(--amber);box-shadow:0 4px 12px #92400e22;transform:translateY(-2px)}
+    .menu-icon{font-size:28px;margin-bottom:8px}
+    .menu-title{font-size:14px;font-weight:600;margin-bottom:4px}
+    .menu-desc{font-size:11px;color:var(--muted)}
+    .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    @media(min-width:600px){.stat-grid{grid-template-columns:repeat(4,1fr)}}
+    .stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;border-left:4px solid}
+    .stat-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+    .stat-value{font-family:'DM Serif Display',serif;font-size:20px}
+    .stat-sub{font-size:11px;color:var(--muted);margin-top:3px}
+    .empty-state{text-align:center;padding:32px;color:var(--muted);font-size:13px}
+    .setoran-item{border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px}
+    .setoran-item.pending{border-color:#fde68a;background:#fffbeb}
+    .badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px}
+    .badge-pending{background:#fef3c7;color:#92400e}
+    .badge-confirmed{background:#d1fae5;color:#065f46}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo">☕</div>
+    <span class="app-name">Kopi Telu Report</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="user-badge" id="user-badge">-</span>
+    <button class="btn-link" onclick="doLogout()">Keluar →</button>
+  </div>
+</header>
+
+<main>
+  <div>
+    <div style="font-family:'DM Serif Display',serif;font-size:22px">💰 Dashboard Keuangan</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:2px" id="greeting-sub">Selamat datang!</div>
+  </div>
+
+  <!-- Menu -->
+  <div class="menu-grid">
+    <a href="setoran-owner.html" class="menu-card">
+      <div class="menu-icon">🏦</div>
+      <div class="menu-title">Manajemen Setoran</div>
+      <div class="menu-desc">Konfirmasi penerimaan setoran outlet</div>
+    </a>
+    <a href="absensi.html" class="menu-card">
+      <div class="menu-icon">📅</div>
+      <div class="menu-title">Rekap Absensi</div>
+      <div class="menu-desc">Lihat absensi karyawan per periode</div>
+    </a>
+  </div>
+
+  <!-- Summary setoran -->
+  <div class="card">
+    <div class="card-title">📊 Ringkasan Setoran — Bulan Ini</div>
+    <div class="stat-grid" id="stat-setoran">
+      <div class="stat-card" style="border-left-color:var(--orange)">
+        <div class="stat-label">Belum Diterima</div>
+        <div class="stat-value" id="s-pending" style="color:var(--orange)">-</div>
+        <div class="stat-sub" id="s-pending-count">-</div>
+      </div>
+      <div class="stat-card" style="border-left-color:var(--green)">
+        <div class="stat-label">Sudah Diterima</div>
+        <div class="stat-value" id="s-confirmed" style="color:var(--green)">-</div>
+        <div class="stat-sub" id="s-confirmed-count">-</div>
+      </div>
+      <div class="stat-card" style="border-left-color:var(--blue)">
+        <div class="stat-label">Total Setoran</div>
+        <div class="stat-value" id="s-total" style="color:var(--blue)">-</div>
+        <div class="stat-sub">bulan ini</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Setoran pending -->
+  <div class="card">
+    <div class="card-title">⏳ Setoran Belum Dikonfirmasi</div>
+    <div id="pending-list"><div class="empty-state">Memuat...</div></div>
+    <a href="setoran-owner.html" style="display:block;text-align:center;margin-top:12px;font-size:13px;color:var(--brown);font-weight:600;text-decoration:none">Lihat Semua →</a>
+  </div>
+</main>
+
+<script type="module">
+  import { Auth, OutletManager } from './js/auth.js';
+  import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+  import { getFirestore, collection, getDocs, query, where, orderBy } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+
+  const user = Auth.requireAuth('keuangan');
+  if (!user) throw new Error();
+  document.getElementById('user-badge').textContent = user.nama;
+  window.doLogout = () => Auth.logout();
+
+  const hour = new Date().getHours();
+  const greet = hour < 11 ? 'Selamat Pagi' : hour < 15 ? 'Selamat Siang' : hour < 18 ? 'Selamat Sore' : 'Selamat Malam';
+  document.getElementById('greeting-sub').textContent = `${greet}, ${user.nama}!`;
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAx4RfDW-UdkFf3m_wQuSdeptqssE7n2wU",
+    authDomain: "cafe-shift-report-70c6c.firebaseapp.com",
+    projectId: "cafe-shift-report-70c6c",
+    storageBucket: "cafe-shift-report-70c6c.firebasestorage.app",
+    messagingSenderId: "461174765046",
+    appId: "1:461174765046:web:660d43de856294644343d7"
+  };
+  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  function fmt(n) { return 'Rp ' + Math.round(n||0).toLocaleString('id-ID'); }
+  function fmtDate(str) { if (!str) return '-'; const [y,m,d] = str.split('-'); return `${d}/${m}/${y}`; }
+
+  const outletMap = {};
+  const outlets = await OutletManager.getAll();
+  outlets.forEach(o => outletMap[o.id] = o.nama);
+
+  // Load setoran bulan ini
+  const today = new Date();
+  const start = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+  const end   = new Date(today.getFullYear(), today.getMonth()+1, 0).toISOString().split('T')[0];
+
+  try {
+    const snap = await getDocs(query(
+      collection(db, "setoran"),
+      where("tanggal", ">=", start),
+      where("tanggal", "<=", end),
+      orderBy("tanggal", "desc")
+    ));
+    const setorans = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const pending   = setorans.filter(s => !s.confirmed);
+    const confirmed = setorans.filter(s => s.confirmed);
+
+    document.getElementById('s-pending').textContent       = fmt(pending.reduce((s,r)=>s+(r.nominal||0),0));
+    document.getElementById('s-confirmed').textContent     = fmt(confirmed.reduce((s,r)=>s+(r.nominal||0),0));
+    document.getElementById('s-total').textContent         = fmt(setorans.reduce((s,r)=>s+(r.nominal||0),0));
+    document.getElementById('s-pending-count').textContent = `${pending.length} setoran`;
+    document.getElementById('s-confirmed-count').textContent = `${confirmed.length} setoran`;
+
+    // Tampilkan setoran pending
+    const list = document.getElementById('pending-list');
+    if (!pending.length) {
+      list.innerHTML = '<div class="empty-state">🎉 Semua setoran sudah dikonfirmasi!</div>';
+    } else {
+      list.innerHTML = pending.slice(0, 5).map(s => `
+        <div class="setoran-item pending">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600">${outletMap[s.outlet]||s.outlet}</div>
+            <div style="font-size:11px;color:var(--muted)">📅 ${fmtDate(s.tanggal)} · 👤 ${s.inputByNama||'-'}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--blue)">${fmt(s.nominal)}</div>
+            <span class="badge badge-pending">⏳ Belum</span>
+          </div>
+        </div>`).join('');
+    }
+  } catch(e) {
+    document.getElementById('pending-list').innerHTML = `<div class="empty-state">Error: ${e.message}</div>`;
+  }
+</script>
+</body>
+</html>
