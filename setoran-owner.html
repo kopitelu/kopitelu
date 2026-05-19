@@ -142,8 +142,7 @@
 
   const user = Auth.requireAuth();
   if (!user) throw new Error();
-  // Cek akses — harus owner atau aksesKeuangan
-  if (user.role !== 'owner' && !user.aksesKeuangan) {
+  if (!['owner','keuangan'].includes(user.role) && !user.aksesKeuangan) {
     window.location.href = 'home.html';
     throw new Error();
   }
