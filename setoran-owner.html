@@ -140,8 +140,13 @@
   import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
   import { getFirestore, collection, query, where, getDocs, doc, updateDoc, orderBy } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
 
-  const user = Auth.requireAuth('owner');
+  const user = Auth.requireAuth();
   if (!user) throw new Error();
+  // Cek akses — harus owner atau aksesKeuangan
+  if (user.role !== 'owner' && !user.aksesKeuangan) {
+    window.location.href = 'home.html';
+    throw new Error();
+  }
 
   document.getElementById('user-badge').textContent = user.nama;
   window.doLogout = () => Auth.logout();
