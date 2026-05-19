@@ -62,7 +62,7 @@
   </div>
   <div style="display:flex;align-items:center;gap:10px">
     <span class="user-badge" id="user-badge">-</span>
-    <a href="dashboard.html" class="btn-link">← Dashboard</a>
+    <a href="dashboard.html" id="link-back" class="btn-link">← Dashboard</a>
     <button class="btn-link" onclick="doLogout()">Keluar →</button>
   </div>
 </header>
@@ -149,6 +149,10 @@
 
   document.getElementById('user-badge').textContent = user.nama;
   window.doLogout = () => Auth.logout();
+  // Back button sesuai role
+  if (user.role === 'keuangan') {
+    document.getElementById('link-back').href = 'dashboard-keuangan.html';
+  }
 
   const firebaseConfig = {
     apiKey: "AIzaSyAx4RfDW-UdkFf3m_wQuSdeptqssE7n2wU",
