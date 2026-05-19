@@ -352,6 +352,7 @@
         <select id="u-role" onchange="toggleOutletField(this.value)" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;background:#fafaf8;outline:none">
           <option value="pegawai">👤 Pegawai Outlet</option>
           <option value="gudang">📦 Staff Gudang</option>
+          <option value="keuangan">💰 Tim Keuangan</option>
         </select>
       </div>
       <div class="form-group" id="outlet-field">
@@ -909,14 +910,17 @@
       }
       list.innerHTML = users.map(u => {
         const isGudang = u.role === 'gudang';
+        const isKeuangan = u.role === 'keuangan';
         const outlets = u.outlets || (u.outlet ? [u.outlet] : []);
         const roleLabel = isGudang
           ? '<span style="background:#dbeafe;color:#1e40af;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px">📦 Gudang</span>'
+          : isKeuangan
+          ? '<span style="background:#d1fae5;color:#065f46;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px">💰 Keuangan</span>'
           : '<span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px">👤 Pegawai</span>';
 
         // Tags outlet yang sudah dimiliki
-        const tags = isGudang
-          ? '<span style="font-size:11px;color:var(--blue)">Akses semua gudang</span>'
+        const tags = (isGudang || isKeuangan)
+          ? `<span style="font-size:11px;color:var(--muted)">${isGudang ? 'Akses inventori gudang' : 'Akses keuangan & setoran'}</span>`
           : outlets.map(oid => {
             const idx = allOutlets.findIndex(o => o.id === oid);
             const color = outletColor(idx >= 0 ? idx : 0);
@@ -942,9 +946,8 @@
                 ${roleLabel}
               </div>
               <div style="display:flex;gap:4px">
-                ${!isGudang ? `<button class="btn-edit" onclick="toggleEdit('${u.id}')">✏️ Edit Outlet</button>` : ''}
-                ${!isGudang ? `<button onclick="toggleAksesGudang('${u.id}', ${!!u.aksesGudang})" class="btn-gudang-toggle ${u.aksesGudang ? 'active' : ''}">📦 ${u.aksesGudang ? 'Gudang: ON' : 'Gudang: OFF'}</button>` : ''}
-                ${!isGudang ? `<button onclick="toggleAksesKeuangan('${u.id}', ${!!u.aksesKeuangan})" class="btn-gudang-toggle ${u.aksesKeuangan ? 'active' : ''}" style="${u.aksesKeuangan ? 'background:#d1fae5;color:#065f46;border-color:#6ee7b7' : ''}">💰 ${u.aksesKeuangan ? 'Keuangan: ON' : 'Keuangan: OFF'}</button>` : ''}
+                ${(!isGudang && !isKeuangan) ? `<button class="btn-edit" onclick="toggleEdit('${u.id}')">✏️ Edit Outlet</button>` : ''}
+                ${(!isGudang && !isKeuangan) ? `<button onclick="toggleAksesGudang('${u.id}', ${!!u.aksesGudang})" class="btn-gudang-toggle ${u.aksesGudang ? 'active' : ''}">📦 ${u.aksesGudang ? 'Gudang: ON' : 'Gudang: OFF'}</button>` : ''}
                 <button class="btn-del" onclick="deleteUser('${u.id}')">Hapus</button>
               </div>
             </div>
@@ -967,14 +970,6 @@
       list.innerHTML = `<div style="color:var(--red);font-size:13px">Error: ${e.message}</div>`;
     }
   }
-
-  window.toggleAksesKeuangan = async (id, current) => {
-    try {
-      await Auth.updateAksesKeuangan(id, !current);
-      showModalMsg('success', `Akses keuangan ${!current ? 'diaktifkan' : 'dinonaktifkan'}.`);
-      loadUsers();
-    } catch(e) { showModalMsg('error', e.message); }
-  };
 
   window.toggleAksesGudang = async (id, current) => {
     try {
@@ -1007,8 +1002,10 @@
   };
 
   window.toggleOutletField = function(role) {
-    document.getElementById('outlet-field').style.display = role === 'gudang' ? 'none' : 'block';
-    document.getElementById('btn-save-user').textContent = role === 'gudang' ? '+ Tambah Staff Gudang' : '+ Tambah Pegawai';
+    document.getElementById('outlet-field').style.display = ['gudang','keuangan'].includes(role) ? 'none' : 'block';
+    document.getElementById('btn-save-user').textContent = 
+      role === 'gudang' ? '+ Tambah Staff Gudang' : 
+      role === 'keuangan' ? '+ Tambah Tim Keuangan' : '+ Tambah Pegawai';
   };
 
   document.getElementById('btn-save-user').addEventListener('click', async () => {
@@ -1019,15 +1016,15 @@
 
     if (!nama || !username || !password) { showModalMsg('error','Semua kolom harus diisi.'); return; }
 
-    if (role === 'gudang') {
+    if (role === 'gudang' || role === 'keuangan') {
       try {
-        await Auth.addUser({ nama, username, password, role: 'gudang' });
+        await Auth.addUser({ nama, username, password, role });
         document.getElementById('u-nama').value = '';
         document.getElementById('u-username').value = '';
         document.getElementById('u-password').value = '';
         document.getElementById('u-role').value = 'pegawai';
         toggleOutletField('pegawai');
-        showModalMsg('success', `Staff Gudang "${nama}" berhasil ditambahkan!`);
+        showModalMsg('success', `${role === 'keuangan' ? 'Tim Keuangan' : 'Staff Gudang'} "${nama}" berhasil ditambahkan!`);
         loadUsers();
       } catch(e) { showModalMsg('error', e.message); }
       return;
