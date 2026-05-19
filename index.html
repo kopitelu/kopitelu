@@ -61,7 +61,12 @@
   import { Auth, OutletManager } from './js/auth.js';
 
   const existing = Auth.getUser();
-  if (existing) window.location.href = existing.role === 'owner' ? 'dashboard.html' : 'input.html';
+  if (existing) {
+    if (existing.role === 'owner') window.location.href = 'dashboard.html';
+    else if (existing.role === 'gudang') window.location.href = 'inventori.html';
+    else if (existing.role === 'keuangan') window.location.href = 'dashboard-keuangan.html';
+    else window.location.href = 'home.html';
+  }
 
   let allOutlets = [];
   let debounceTimer = null;
