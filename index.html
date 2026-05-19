@@ -96,6 +96,15 @@
         const users = await Auth.getUsers();
         const found = users.find(u => u.username === username);
         if (!found) { hint.textContent = 'Username tidak ditemukan.'; sel.innerHTML = '<option value="">--</option>'; return; }
+
+        // Role gudang dan keuangan tidak perlu pilih outlet
+        if (found.role === 'gudang' || found.role === 'keuangan') {
+          sel.innerHTML = `<option value="none">— Tidak perlu pilih outlet —</option>`;
+          sel.disabled = true;
+          hint.textContent = `Role: ${found.role === 'gudang' ? '📦 Staff Gudang' : '💰 Tim Keuangan'}`;
+          return;
+        }
+
         const allowed = found.outlets || (found.outlet ? [found.outlet] : []);
         const namesMap = await OutletManager.getNamesMap();
         sel.innerHTML = '<option value="">-- Pilih outlet --</option>';
@@ -116,10 +125,17 @@
     const btn = document.getElementById('btn-login');
     err.style.display = 'none';
     if (!u || !p) { err.textContent = 'Username dan password harus diisi.'; err.style.display = 'block'; return; }
-    if (!o) { err.textContent = 'Pilih outlet terlebih dahulu.'; err.style.display = 'block'; return; }
+
+    // Cek apakah role yang tidak butuh outlet
+    const users = await Auth.getUsers().catch(() => []);
+    const found = users.find(x => x.username === u);
+    const skipOutlet = found && ['gudang','keuangan'].includes(found.role);
+
+    if (!skipOutlet && !o) { err.textContent = 'Pilih outlet terlebih dahulu.'; err.style.display = 'block'; return; }
+
     btn.disabled = true; btn.textContent = 'Memeriksa...';
     try {
-      const user = await Auth.login(u, p, o);
+      const user = await Auth.login(u, p, skipOutlet ? 'none' : o);
       if (!user) { err.textContent = 'Username atau password salah.'; err.style.display = 'block'; return; }
       if (user.role === 'owner') {
         window.location.href = 'dashboard.html';
