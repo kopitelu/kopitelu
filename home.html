@@ -180,8 +180,8 @@
   const timeGreet = hour < 11 ? '🌅 Selamat Pagi' : hour < 15 ? '☀️ Selamat Siang' : hour < 18 ? '🌆 Selamat Sore' : '🌙 Selamat Malam';
   document.querySelector('.greeting-hello').textContent = timeGreet + ',';
 
-  // Tampilkan menu keuangan kalau punya akses keuangan
-  if (user.aksesKeuangan) {
+  // Tampilkan menu keuangan kalau role keuangan
+  if (user.aksesKeuangan || user.role === 'keuangan') {
     document.getElementById('menu-keuangan').style.display = 'flex';
   }
   // Tampilkan menu inventori dan master item kalau punya akses gudang
