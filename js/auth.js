@@ -130,6 +130,9 @@ export const Auth = {
     if (role === "inventori" && !["owner","gudang"].includes(u.role) && !u.aksesGudang) {
       window.location.href = "home.html"; return null;
     }
+    if (role === "keuangan" && !["owner","keuangan"].includes(u.role)) {
+      window.location.href = "home.html"; return null;
+    }
     return u;
   },
 
@@ -151,8 +154,8 @@ export const Auth = {
   async addUser(data) {
     const snap = await getDocs(query(collection(db, "users"), where("username", "==", data.username)));
     if (!snap.empty) throw new Error("Username sudah digunakan");
-    if (data.role === "gudang") {
-      return addDoc(collection(db, "users"), { ...data, role: "gudang" });
+    if (data.role === "gudang" || data.role === "keuangan") {
+      return addDoc(collection(db, "users"), { ...data });
     }
     if (!data.outlets || data.outlets.length === 0) throw new Error("Pilih minimal 1 outlet");
     return addDoc(collection(db, "users"), { ...data, role: "pegawai" });
@@ -161,10 +164,6 @@ export const Auth = {
   async updateUserOutlets(id, outlets) {
     if (!outlets || outlets.length === 0) throw new Error("Pilih minimal 1 outlet");
     await updateDoc(doc(db, "users", id), { outlets });
-  },
-
-  async updateAksesKeuangan(id, value) {
-    await updateDoc(doc(db, "users", id), { aksesKeuangan: value });
   },
 
   async updateAksesGudang(id, value) {
