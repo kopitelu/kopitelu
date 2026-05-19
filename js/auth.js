@@ -163,6 +163,10 @@ export const Auth = {
     await updateDoc(doc(db, "users", id), { outlets });
   },
 
+  async updateAksesKeuangan(id, value) {
+    await updateDoc(doc(db, "users", id), { aksesKeuangan: value });
+  },
+
   async updateAksesGudang(id, value) {
     await updateDoc(doc(db, "users", id), { aksesGudang: value });
   },
