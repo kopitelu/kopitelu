@@ -97,15 +97,15 @@ export const Auth = {
     if (snap.empty) return null;
     const u = { id: snap.docs[0].id, ...snap.docs[0].data() };
 
-    // Akun gudang tidak perlu pilih outlet
-    if (u.role === "gudang") {
+    // Akun gudang dan keuangan tidak perlu pilih outlet
+    if (u.role === "gudang" || u.role === "keuangan") {
       const session = { ...u };
       localStorage.setItem("cafe_session", JSON.stringify(session));
       return session;
     }
 
     const allowedOutlets = u.outlets || (u.outlet ? [u.outlet] : []);
-    if (!allowedOutlets.includes(outlet)) {
+    if (outlet !== 'none' && !allowedOutlets.includes(outlet)) {
       throw new Error("Kamu tidak terdaftar di outlet ini.");
     }
     const session = { ...u, outlets: allowedOutlets, selectedOutlet: outlet };
