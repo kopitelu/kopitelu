@@ -109,8 +109,11 @@
   import { Auth, OutletManager } from './js/auth.js';
   import { Storage } from './js/firebase.js';
 
-  const user = Auth.requireAuth('owner');
+  const user = Auth.requireAuth();
   if (!user) throw new Error();
+  if (!['owner','keuangan'].includes(user.role)) {
+    window.location.href = 'home.html'; throw new Error();
+  }
 
   document.getElementById('user-badge').textContent = user.nama;
   window.doLogout = () => Auth.logout();
