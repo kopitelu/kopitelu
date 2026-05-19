@@ -112,6 +112,16 @@
     <div class="menu-arrow">›</div>
   </a>
 
+  <a href="setoran-owner.html" class="menu-card" id="menu-keuangan" style="display:none">
+    <div class="menu-icon" style="background:#d1fae5">💰</div>
+    <div class="menu-info">
+      <div class="menu-title">Manajemen Setoran</div>
+      <div class="menu-desc">Pantau dan konfirmasi setoran dari outlet</div>
+      <span class="menu-badge" style="background:#d1fae5;color:#065f46">Keuangan</span>
+    </div>
+    <div class="menu-arrow">›</div>
+  </a>
+
   <a href="inventori.html" class="menu-card" id="menu-inventori" style="display:none">
     <div class="menu-icon" style="background:#dbeafe">🏭</div>
     <div class="menu-info">
@@ -170,6 +180,10 @@
   const timeGreet = hour < 11 ? '🌅 Selamat Pagi' : hour < 15 ? '☀️ Selamat Siang' : hour < 18 ? '🌆 Selamat Sore' : '🌙 Selamat Malam';
   document.querySelector('.greeting-hello').textContent = timeGreet + ',';
 
+  // Tampilkan menu keuangan kalau punya akses keuangan
+  if (user.aksesKeuangan) {
+    document.getElementById('menu-keuangan').style.display = 'flex';
+  }
   // Tampilkan menu inventori dan master item kalau punya akses gudang
   if (user.aksesGudang || user.role === 'gudang') {
     document.getElementById('menu-inventori').style.display = 'flex';
