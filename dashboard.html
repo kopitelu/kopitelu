@@ -944,6 +944,7 @@
               <div style="display:flex;gap:4px">
                 ${!isGudang ? `<button class="btn-edit" onclick="toggleEdit('${u.id}')">✏️ Edit Outlet</button>` : ''}
                 ${!isGudang ? `<button onclick="toggleAksesGudang('${u.id}', ${!!u.aksesGudang})" class="btn-gudang-toggle ${u.aksesGudang ? 'active' : ''}">📦 ${u.aksesGudang ? 'Gudang: ON' : 'Gudang: OFF'}</button>` : ''}
+                ${!isGudang ? `<button onclick="toggleAksesKeuangan('${u.id}', ${!!u.aksesKeuangan})" class="btn-gudang-toggle ${u.aksesKeuangan ? 'active' : ''}" style="${u.aksesKeuangan ? 'background:#d1fae5;color:#065f46;border-color:#6ee7b7' : ''}">💰 ${u.aksesKeuangan ? 'Keuangan: ON' : 'Keuangan: OFF'}</button>` : ''}
                 <button class="btn-del" onclick="deleteUser('${u.id}')">Hapus</button>
               </div>
             </div>
@@ -966,6 +967,14 @@
       list.innerHTML = `<div style="color:var(--red);font-size:13px">Error: ${e.message}</div>`;
     }
   }
+
+  window.toggleAksesKeuangan = async (id, current) => {
+    try {
+      await Auth.updateAksesKeuangan(id, !current);
+      showModalMsg('success', `Akses keuangan ${!current ? 'diaktifkan' : 'dinonaktifkan'}.`);
+      loadUsers();
+    } catch(e) { showModalMsg('error', e.message); }
+  };
 
   window.toggleAksesGudang = async (id, current) => {
     try {
