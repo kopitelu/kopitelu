@@ -335,7 +335,7 @@
     <div class="msg-error" id="stok-masuk-error"></div>
     <div class="form-group">
       <label>Item</label>
-      <select id="stok-masuk-item"></select>
+      <div id="stok-masuk-item-select"></div>
     </div>
     <div class="form-group">
       <label>Jumlah Masuk</label>
@@ -646,6 +646,16 @@
   };
 
   // Stok masuk
+  // Konversi unit ↔ satuan dasar di stok masuk
+  document.getElementById('stok-masuk-unit').addEventListener('input', function() {
+    const item = allItems.find(i => i.id === selectedStokMasukId);
+    if (item?.unitIsi) document.getElementById('stok-masuk-jumlah').value = parseFloat(this.value||0) * item.unitIsi;
+  });
+  document.getElementById('stok-masuk-jumlah').addEventListener('input', function() {
+    const item = allItems.find(i => i.id === selectedStokMasukId);
+    if (item?.unitIsi) document.getElementById('stok-masuk-unit').value = (parseFloat(this.value||0) / item.unitIsi).toFixed(2);
+  });
+
   function updateStokMasukSelect() {
     const sel = document.getElementById('stok-masuk-item');
     sel.innerHTML = '<option value="">-- Pilih Item --</option>';
@@ -656,50 +666,43 @@
     });
   }
 
+  let selectedStokMasukId = '';
+
   window.openModalStokMasuk = function() {
+    selectedStokMasukId = '';
     document.getElementById('stok-masuk-jumlah').value = '';
     document.getElementById('stok-masuk-unit').value = '';
     document.getElementById('stok-masuk-catatan').value = '';
     document.getElementById('stok-masuk-error').style.display = 'none';
+
+    // Init searchable select dengan semua item
+    const itemOptions = allItems.map(i => ({
+      id: i.id,
+      label: `${i.nama} (stok: ${i.stok} ${i.satuan}${i.unitNama&&i.unitIsi?' · 1 '+i.unitNama+'='+i.unitIsi+i.satuan:''})`
+    }));
+    createSearchSelect('stok-masuk-item-select', itemOptions, (itemId) => {
+      selectedStokMasukId = itemId;
+      const item = allItems.find(i => i.id === itemId);
+      const wrap  = document.getElementById('stok-masuk-unit-wrap');
+      const label = document.getElementById('stok-masuk-unit-label');
+      if (item?.unitNama && item?.unitIsi) {
+        wrap.style.display = 'block';
+        label.textContent = `dalam ${item.unitNama} (1 ${item.unitNama} = ${item.unitIsi} ${item.satuan})`;
+      } else {
+        wrap.style.display = 'none';
+      }
+      document.getElementById('stok-masuk-jumlah').value = '';
+      document.getElementById('stok-masuk-unit').value = '';
+    }, 'Ketik nama item...');
+
     document.getElementById('modal-stok-masuk').classList.add('show');
   };
 
-  // Update unit info saat pilih item
-  document.getElementById('stok-masuk-item').addEventListener('change', function() {
-    const item = allItems.find(i => i.id === this.value);
-    const wrap = document.getElementById('stok-masuk-unit-wrap');
-    const label = document.getElementById('stok-masuk-unit-label');
-    if (item?.unitNama && item?.unitIsi) {
-      wrap.style.display = 'block';
-      label.textContent = `dalam ${item.unitNama} (1 ${item.unitNama} = ${item.unitIsi} ${item.satuan})`;
-    } else {
-      wrap.style.display = 'none';
-    }
-  });
-
-  // Konversi unit ke satuan dasar saat input unit
-  document.getElementById('stok-masuk-unit').addEventListener('input', function() {
-    const itemId = document.getElementById('stok-masuk-item').value;
-    const item = allItems.find(i => i.id === itemId);
-    if (item?.unitIsi) {
-      document.getElementById('stok-masuk-jumlah').value = parseFloat(this.value||0) * item.unitIsi;
-    }
-  });
-
-  // Konversi satuan dasar ke unit saat input jumlah
-  document.getElementById('stok-masuk-jumlah').addEventListener('input', function() {
-    const itemId = document.getElementById('stok-masuk-item').value;
-    const item = allItems.find(i => i.id === itemId);
-    if (item?.unitIsi) {
-      document.getElementById('stok-masuk-unit').value = (parseFloat(this.value||0) / item.unitIsi).toFixed(2);
-    }
-  });
-
   window.submitStokMasuk = async function() {
-    const itemId = document.getElementById('stok-masuk-item').value;
-    const jumlah = parseFloat(document.getElementById('stok-masuk-jumlah').value) || 0;
+    const itemId  = selectedStokMasukId;
+    const jumlah  = parseFloat(document.getElementById('stok-masuk-jumlah').value) || 0;
     const catatan = document.getElementById('stok-masuk-catatan').value.trim();
-    const errEl = document.getElementById('stok-masuk-error');
+    const errEl   = document.getElementById('stok-masuk-error');
 
     if (!itemId) { errEl.style.display='block'; errEl.textContent='Pilih item!'; return; }
     if (jumlah <= 0) { errEl.style.display='block'; errEl.textContent='Jumlah harus lebih dari 0!'; return; }
