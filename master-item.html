@@ -388,6 +388,11 @@
     } catch(e) { alert('Gagal hapus: ' + e.message); }
   };
 
+  window.closeModal = () => {
+    document.getElementById('modal-item').classList.remove('show');
+    editId = null;
+  };
+
   // Preview konversi unit
   function updateUnitPreview() {
     const satuan   = document.getElementById('item-satuan').value.trim();
