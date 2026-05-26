@@ -137,7 +137,17 @@
       </div>
       <div class="form-group">
         <label>Jumlah Masuk</label>
-        <input type="number" id="masuk-jumlah" placeholder="0" min="0" step="0.1"/>
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <div style="flex:1">
+            <input type="number" id="masuk-jumlah" placeholder="0" min="0" step="0.1"/>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px" id="masuk-satuan-label">dalam satuan dasar</div>
+          </div>
+          <div style="padding-top:10px;color:var(--muted);font-size:12px">atau</div>
+          <div style="flex:1" id="masuk-unit-wrap" style="display:none">
+            <input type="number" id="masuk-unit-jumlah" placeholder="0" min="0" step="0.1"/>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px" id="masuk-unit-label">dalam unit kemasan</div>
+          </div>
+        </div>
       </div>
       <div class="form-group">
         <label>Keterangan</label>
@@ -244,7 +254,29 @@
     const itemOptions = allItems.map(i => ({ id: i.id, label: `${i.nama} (${i.satuan})` }));
     initSearchSelect('masuk-item-select', itemOptions, (id) => {
       selectedMasukItemId = id;
+      const item = allItems.find(i => i.id === id);
+      const wrap  = document.getElementById('masuk-unit-wrap');
+      const label = document.getElementById('masuk-unit-label');
+      const satuanLabel = document.getElementById('masuk-satuan-label');
+      if (item?.unitNama && item?.unitIsi) {
+        wrap.style.display = 'block';
+        label.textContent = `dalam ${item.unitNama} (1 ${item.unitNama} = ${item.unitIsi} ${item.satuan})`;
+        satuanLabel.textContent = `dalam ${item.satuan}`;
+      } else {
+        wrap.style.display = 'none';
+        satuanLabel.textContent = `dalam ${item?.satuan || 'satuan dasar'}`;
+      }
     }, 'Ketik nama bahan...');
+
+    // Konversi unit ↔ satuan dasar
+    document.getElementById('masuk-unit-jumlah').addEventListener('input', function() {
+      const item = allItems.find(i => i.id === selectedMasukItemId);
+      if (item?.unitIsi) document.getElementById('masuk-jumlah').value = parseFloat(this.value||0) * item.unitIsi;
+    });
+    document.getElementById('masuk-jumlah').addEventListener('input', function() {
+      const item = allItems.find(i => i.id === selectedMasukItemId);
+      if (item?.unitIsi) document.getElementById('masuk-unit-jumlah').value = (parseFloat(this.value||0) / item.unitIsi).toFixed(2);
+    });
 
     // Setup outlet tabs
     const viewOutlets = isOwner ? allOutlets : allOutlets.filter(o => myOutlets.includes(o.id));
@@ -355,6 +387,7 @@
         <div style="text-align:right;min-width:80px">
           <div class="stok-val" style="color:${color}">${item.stok}</div>
           <div style="font-size:11px;color:var(--muted)">${item.satuan}</div>
+          ${(() => { const gi = allItems.find(i=>i.id===item.itemId); return gi?.unitNama&&gi?.unitIsi ? `<div style="font-size:10px;color:var(--muted)">(${(item.stok/gi.unitIsi).toFixed(1)} ${gi.unitNama})</div>` : ''; })()}
         </div>
       </div>`;
     }).join('');
