@@ -339,7 +339,17 @@
     </div>
     <div class="form-group">
       <label>Jumlah Masuk</label>
-      <input type="number" id="stok-masuk-jumlah" placeholder="0" min="0" step="0.1"/>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1">
+          <input type="number" id="stok-masuk-jumlah" placeholder="0" min="0" step="0.1"/>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">dalam satuan dasar (gr/ml/pcs)</div>
+        </div>
+        <div style="text-align:center;padding-top:10px;color:var(--muted);font-size:13px">atau</div>
+        <div style="flex:1" id="stok-masuk-unit-wrap" style="display:none">
+          <input type="number" id="stok-masuk-unit" placeholder="0" min="0" step="0.1"/>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px" id="stok-masuk-unit-label">dalam unit kemasan</div>
+        </div>
+      </div>
     </div>
     <div class="form-group">
       <label>Catatan (opsional)</label>
@@ -528,11 +538,11 @@
         <div class="item-icon" style="background:${status==='critical'?'#fef2f2':status==='warn'?'#fffbeb':'#f0fdf4'}">${icon}</div>
         <div class="item-info">
           <div class="item-nama">${item.nama}</div>
-          <div class="item-meta">Min: ${item.minStok} ${item.satuan} · ${item.kategori||'lainnya'}</div>
+          <div class="item-meta">Min: ${item.minStok} ${item.satuan}${item.unitNama&&item.unitIsi ? ` · 1 ${item.unitNama} = ${item.unitIsi} ${item.satuan}` : ''} · ${item.kategori||'lainnya'}</div>
         </div>
         <div class="stok-bar-wrap">
           <div class="stok-bar"><div class="stok-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
-          <div class="stok-text stok-${status}">${item.stok} ${item.satuan}</div>
+          <div class="stok-text stok-${status}">${item.stok} ${item.satuan}${item.unitNama&&item.unitIsi ? ` (${(item.stok/item.unitIsi).toFixed(1)} ${item.unitNama})` : ''}</div>
         </div>
         <span class="badge-stok badge-${status}" style="margin:0 8px">
           ${status==='critical'?'🔴 Habis':status==='warn'?'🟡 Menipis':'🟢 Aman'}
@@ -648,10 +658,42 @@
 
   window.openModalStokMasuk = function() {
     document.getElementById('stok-masuk-jumlah').value = '';
+    document.getElementById('stok-masuk-unit').value = '';
     document.getElementById('stok-masuk-catatan').value = '';
     document.getElementById('stok-masuk-error').style.display = 'none';
     document.getElementById('modal-stok-masuk').classList.add('show');
   };
+
+  // Update unit info saat pilih item
+  document.getElementById('stok-masuk-item').addEventListener('change', function() {
+    const item = allItems.find(i => i.id === this.value);
+    const wrap = document.getElementById('stok-masuk-unit-wrap');
+    const label = document.getElementById('stok-masuk-unit-label');
+    if (item?.unitNama && item?.unitIsi) {
+      wrap.style.display = 'block';
+      label.textContent = `dalam ${item.unitNama} (1 ${item.unitNama} = ${item.unitIsi} ${item.satuan})`;
+    } else {
+      wrap.style.display = 'none';
+    }
+  });
+
+  // Konversi unit ke satuan dasar saat input unit
+  document.getElementById('stok-masuk-unit').addEventListener('input', function() {
+    const itemId = document.getElementById('stok-masuk-item').value;
+    const item = allItems.find(i => i.id === itemId);
+    if (item?.unitIsi) {
+      document.getElementById('stok-masuk-jumlah').value = parseFloat(this.value||0) * item.unitIsi;
+    }
+  });
+
+  // Konversi satuan dasar ke unit saat input jumlah
+  document.getElementById('stok-masuk-jumlah').addEventListener('input', function() {
+    const itemId = document.getElementById('stok-masuk-item').value;
+    const item = allItems.find(i => i.id === itemId);
+    if (item?.unitIsi) {
+      document.getElementById('stok-masuk-unit').value = (parseFloat(this.value||0) / item.unitIsi).toFixed(2);
+    }
+  });
 
   window.submitStokMasuk = async function() {
     const itemId = document.getElementById('stok-masuk-item').value;
