@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Check-in Absensi — Kopi Telu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--brown:#92400e;--amber:#b45309;--light:#fffbf5;--card:#fff;--border:#e5d8c8;--text:#1c1410;--muted:#7a6652;--green:#059669;--red:#dc2626;--blue:#2563eb;--orange:#ea580c}
+    body{font-family:'DM Sans',sans-serif;background:var(--light);color:var(--text);min-height:100vh}
+    header{background:var(--brown);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px #92400e44}
+    .header-left{display:flex;align-items:center;gap:10px}
+    .logo{width:32px;height:32px;background:#78350f;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+    .app-name{font-family:'DM Serif Display',serif;font-size:17px}
+    .btn-link{color:#fcd34d;font-size:13px;cursor:pointer;background:none;border:none;text-decoration:none}
+    .user-badge{background:#78350f;padding:3px 10px;border-radius:99px;font-size:12px;color:#fff}
+    nav{background:#fff;border-bottom:1px solid var(--border);display:flex}
+    .nav-back{flex:1;padding:12px;text-align:center;font-size:13px;font-weight:500;color:var(--muted);border-bottom:2.5px solid transparent;text-decoration:none;font-family:'DM Sans',sans-serif}
+    .nav-active{flex:2;padding:12px;text-align:center;font-size:13px;font-weight:500;color:var(--brown);border-bottom:2.5px solid var(--brown);text-decoration:none;font-family:'DM Sans',sans-serif}
+    main{max-width:480px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:40px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px}
+    .status-box{border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;margin-bottom:4px}
+    .status-ok{background:#f0fdf4;border:1.5px solid #6ee7b7}
+    .status-warn{background:#fffbeb;border:1.5px solid #fde68a}
+    .status-err{background:#fef2f2;border:1.5px solid #fecaca}
+    .btn-full{width:100%;padding:14px;font-size:15px;font-weight:700;border:none;border-radius:14px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:4px;transition:all .2s}
+    .btn-checkin{background:var(--green);color:#fff}
+    .btn-checkin:hover{background:#047857}
+    .btn-checkout{background:var(--red);color:#fff}
+    .btn-checkout:hover{background:#b91c1c}
+    .btn-full:disabled{background:#d1d5db;cursor:not-allowed}
+    /* Kamera */
+    .camera-wrap{position:relative;width:100%;aspect-ratio:1;background:#000;border-radius:14px;overflow:hidden}
+    .camera-wrap video{width:100%;height:100%;object-fit:cover}
+    .camera-wrap canvas{display:none}
+    .selfie-preview{width:100%;aspect-ratio:1;border-radius:14px;object-fit:cover;display:none}
+    .btn-camera{background:var(--brown);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:8px}
+    .btn-retake{background:var(--light);color:var(--brown);border:1.5px solid var(--border);border-radius:10px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:8px}
+    /* GPS */
+    .gps-info{font-size:12px;color:var(--muted);padding:10px 12px;background:var(--light);border-radius:10px;margin-top:8px}
+    .step{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+    .step:last-child{border-bottom:none}
+    .step-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+    .step-done{background:#d1fae5}
+    .step-pending{background:#f3f4f6}
+    .step-error{background:#fef2f2}
+    .msg-error{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 12px;font-size:12px;color:var(--red);margin-bottom:10px;display:none}
+    .msg-success{background:#f0fdf4;border:1px solid #6ee7b7;border-radius:8px;padding:12px;font-size:13px;color:var(--green);display:none;text-align:center}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo">☕</div>
+    <span class="app-name">Kopi Telu Report</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="user-badge" id="user-badge">-</span>
+    <button class="btn-link" onclick="doLogout()">Keluar →</button>
+  </div>
+</header>
+
+<nav>
+  <a href="home.html" class="nav-back">← Menu</a>
+  <a href="absensi-checkin.html" class="nav-active">📍 Absensi</a>
+</nav>
+
+<main>
+  <div>
+    <div style="font-family:'DM Serif Display',serif;font-size:20px">📍 Absensi Harian</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:2px" id="waktu-sekarang"></div>
+  </div>
+
+  <!-- Status hari ini -->
+  <div id="status-hari-ini" class="card" style="display:none"></div>
+
+  <!-- Error / Success -->
+  <div class="msg-error" id="main-error"></div>
+  <div class="msg-success" id="main-success"></div>
+
+  <!-- Steps -->
+  <div class="card">
+    <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px">Langkah Absensi</div>
+    <div class="step">
+      <div class="step-icon step-pending" id="step1-icon">1</div>
+      <div>
+        <div style="font-weight:600" id="step1-title">Deteksi Lokasi GPS</div>
+        <div style="font-size:11px;color:var(--muted)" id="step1-sub">Izinkan akses lokasi di browser</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-icon step-pending" id="step2-icon">2</div>
+      <div>
+        <div style="font-weight:600">Selfie</div>
+        <div style="font-size:11px;color:var(--muted)" id="step2-sub">Foto wajah sebagai bukti kehadiran</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-icon step-pending" id="step3-icon">3</div>
+      <div>
+        <div style="font-weight:600">Konfirmasi</div>
+        <div style="font-size:11px;color:var(--muted)">Submit absensi ke sistem</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GPS Section -->
+  <div class="card" id="gps-section">
+    <div style="font-size:13px;font-weight:600;margin-bottom:10px">📍 Step 1 — Lokasi GPS</div>
+    <button class="btn-camera" onclick="getLocation()" id="btn-gps">🔍 Deteksi Lokasi Saya</button>
+    <div class="gps-info" id="gps-info" style="display:none"></div>
+  </div>
+
+  <!-- Selfie Section -->
+  <div class="card" id="selfie-section" style="display:none">
+    <div style="font-size:13px;font-weight:600;margin-bottom:10px">🤳 Step 2 — Selfie</div>
+    <div class="camera-wrap" id="camera-wrap">
+      <video id="video" autoplay playsinline></video>
+      <canvas id="canvas"></canvas>
+    </div>
+    <img id="selfie-preview" class="selfie-preview"/>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn-camera" onclick="ambilFoto()" id="btn-foto" style="flex:1">📸 Ambil Foto</button>
+      <button class="btn-retake" onclick="retakeFoto()" id="btn-retake" style="display:none;flex:1">🔄 Ulangi</button>
+    </div>
+  </div>
+
+  <!-- Submit Section -->
+  <div id="submit-section" style="display:none">
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px">RINGKASAN ABSENSI</div>
+      <div id="ringkasan-absensi"></div>
+    </div>
+    <button class="btn-full btn-checkin" id="btn-checkin" onclick="submitAbsensi('checkin')">✅ CHECK-IN Sekarang</button>
+    <button class="btn-full btn-checkout" id="btn-checkout" onclick="submitAbsensi('checkout')" style="display:none;margin-top:8px">🚪 CHECK-OUT Sekarang</button>
+  </div>
+</main>
+
+<script type="module">
+  import { Auth, OutletManager } from './js/auth.js';
+  import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+  import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+
+  const user = Auth.requireAuth();
+  if (!user) throw new Error();
+  document.getElementById('user-badge').textContent = user.nama;
+  window.doLogout = () => Auth.logout();
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAx4RfDW-UdkFf3m_wQuSdeptqssE7n2wU",
+    authDomain: "cafe-shift-report-70c6c.firebaseapp.com",
+    projectId: "cafe-shift-report-70c6c",
+    storageBucket: "cafe-shift-report-70c6c.firebasestorage.app",
+    messagingSenderId: "461174765046",
+    appId: "1:461174765046:web:660d43de856294644343d7"
+  };
+  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const TELEGRAM_TOKEN = '8613637829:AAERHEyn8KfJRcJIDra-w3h-kgYcS29WhMQ';
+  const TELEGRAM_CHAT  = '7202941698';
+
+  // Koordinat outlet
+  const OUTLET_COORDS = {
+    outlet1: { lat: -7.688950634931567, lng: 112.68536352726979, nama: 'Kopi Telu Sawah View' },
+    outlet2: { lat: -7.718720380826275, lng: 112.66260829447272, nama: 'Kopi Telu Awang Awang' },
+    outlet3: { lat: -7.299739107889444, lng: 112.64990610800291, nama: 'Kopi Telu Citraland' },
+    outlet4: { lat: -7.688950634931567, lng: 112.68536352726979, nama: 'Bar Eskrim' },
+    outlet5: { lat: -7.263278282529227, lng: 112.74022206144392, nama: 'Tanara Tunjungan Plaza' }
+  };
+  const RADIUS_METER = 100;
+
+  // Jam sekarang WIB
+  function nowWIB() { return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })); }
+  function fmtTime(d) { return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
+  function fmtDate(d) { return d.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' }); }
+
+  // Update jam live
+  setInterval(() => {
+    const now = nowWIB();
+    document.getElementById('waktu-sekarang').textContent = `${fmtDate(now)} · ${fmtTime(now)}`;
+  }, 1000);
+
+  const todayStr = nowWIB().toISOString().split('T')[0];
+  const myOutlet = user.selectedOutlet || (user.outlets?.[0]);
+  const outletInfo = OUTLET_COORDS[myOutlet];
+
+  let gpsData    = null;
+  let selfieData = null;
+  let videoStream = null;
+  let todayAbsensi = null;
+
+  // Cek absensi hari ini
+  async function cekAbsensiHariIni() {
+    try {
+      const snap = await getDocs(query(
+        collection(db, "absensi_gps"),
+        where("userId", "==", user.id),
+        where("tanggal", "==", todayStr)
+      ));
+      if (!snap.empty) {
+        todayAbsensi = { id: snap.docs[0].id, ...snap.docs[0].data() };
+        renderStatusHariIni();
+      }
+    } catch(e) { console.warn(e); }
+  }
+  cekAbsensiHariIni();
+
+  function renderStatusHariIni() {
+    const box = document.getElementById('status-hari-ini');
+    box.style.display = 'block';
+    if (todayAbsensi?.checkOut) {
+      box.innerHTML = `<div class="status-box status-ok">
+        <div style="font-size:24px">✅</div>
+        <div>
+          <div style="font-weight:600;color:var(--green)">Absensi Selesai</div>
+          <div style="font-size:12px;color:var(--muted)">Check-in: ${todayAbsensi.checkInTime} · Check-out: ${todayAbsensi.checkOutTime}</div>
+          <div style="font-size:12px;color:var(--muted)">Status: ${todayAbsensi.statusCheckin}</div>
+        </div>
+      </div>`;
+      // Tampilkan tombol checkout sudah selesai
+      document.getElementById('btn-checkin').style.display = 'none';
+    } else if (todayAbsensi?.checkIn) {
+      box.innerHTML = `<div class="status-box status-warn">
+        <div style="font-size:24px">⏳</div>
+        <div>
+          <div style="font-weight:600;color:var(--amber)">Sudah Check-in</div>
+          <div style="font-size:12px;color:var(--muted)">Check-in: ${todayAbsensi.checkInTime} · ${todayAbsensi.statusCheckin}</div>
+          <div style="font-size:12px;color:var(--muted)">Belum check-out</div>
+        </div>
+      </div>`;
+      // Tampilkan tombol checkout
+      document.getElementById('btn-checkin').style.display = 'none';
+      document.getElementById('btn-checkout').style.display = 'block';
+    }
+  }
+
+  // Hitung jarak 2 koordinat (meter)
+  function hitungJarak(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const dLat = (lat2-lat1) * Math.PI/180;
+    const dLng = (lng2-lng1) * Math.PI/180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  // Step 1 — GPS
+  window.getLocation = async function() {
+    const btn = document.getElementById('btn-gps');
+    btn.textContent = '⏳ Mendeteksi...'; btn.disabled = true;
+
+    if (!navigator.geolocation) {
+      showError('Browser tidak mendukung GPS. Gunakan Chrome atau Safari.');
+      btn.textContent = '🔍 Deteksi Lokasi'; btn.disabled = false;
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const akurasi = pos.coords.accuracy;
+        gpsData = { lat, lng, akurasi };
+
+        // Hitung jarak ke outlet
+        let jarakInfo = '';
+        let sesuaiOutlet = false;
+        let jarakMeter = 999999;
+
+        if (outletInfo) {
+          jarakMeter = hitungJarak(lat, lng, outletInfo.lat, outletInfo.lng);
+          sesuaiOutlet = jarakMeter <= RADIUS_METER;
+          jarakInfo = `\nJarak ke ${outletInfo.nama}: ${Math.round(jarakMeter)}m ${sesuaiOutlet ? '✅' : '⚠️ Di luar radius'}`;
+        }
+
+        gpsData.jarak = Math.round(jarakMeter);
+        gpsData.sesuaiOutlet = sesuaiOutlet;
+
+        // Ambil nama lokasi via reverse geocoding
+        try {
+          const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+          const geo = await resp.json();
+          gpsData.alamat = geo.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        } catch(e) {
+          gpsData.alamat = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        }
+
+        document.getElementById('gps-info').style.display = 'block';
+        document.getElementById('gps-info').innerHTML = `
+          📍 <strong>${gpsData.alamat}</strong><br/>
+          Akurasi: ±${Math.round(akurasi)}m${jarakInfo}
+        `;
+
+        // Update step 1
+        document.getElementById('step1-icon').textContent = '✅';
+        document.getElementById('step1-icon').className = 'step-icon step-done';
+        document.getElementById('step1-title').textContent = 'Lokasi Terdeteksi';
+        document.getElementById('step1-sub').textContent = `${Math.round(jarakMeter)}m dari outlet`;
+
+        btn.textContent = '✅ Lokasi Terdeteksi';
+
+        // Buka selfie section
+        document.getElementById('selfie-section').style.display = 'block';
+        startCamera();
+      },
+      (err) => {
+        showError(`Gagal deteksi lokasi: ${err.message}. Pastikan izin lokasi diaktifkan.`);
+        btn.textContent = '🔍 Coba Lagi'; btn.disabled = false;
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  };
+
+  // Step 2 — Kamera
+  async function startCamera() {
+    try {
+      videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+      document.getElementById('video').srcObject = videoStream;
+    } catch(e) {
+      showError('Tidak bisa akses kamera: ' + e.message);
+    }
+  }
+
+  window.ambilFoto = function() {
+    const video  = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const preview = document.getElementById('selfie-preview');
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    selfieData = canvas.toDataURL('image/jpeg', 0.7);
+
+    // Stop camera, tampilkan preview
+    if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+    preview.src = selfieData;
+    preview.style.display = 'block';
+    document.getElementById('camera-wrap').style.display = 'none';
+    document.getElementById('btn-foto').style.display = 'none';
+    document.getElementById('btn-retake').style.display = 'inline-block';
+
+    // Update step 2
+    document.getElementById('step2-icon').textContent = '✅';
+    document.getElementById('step2-icon').className = 'step-icon step-done';
+    document.getElementById('step2-sub').textContent = 'Foto berhasil diambil';
+
+    // Tampilkan submit section
+    renderRingkasan();
+    document.getElementById('submit-section').style.display = 'block';
+
+    // Tentukan checkin atau checkout
+    if (todayAbsensi?.checkIn && !todayAbsensi?.checkOut) {
+      document.getElementById('btn-checkin').style.display = 'none';
+      document.getElementById('btn-checkout').style.display = 'block';
+    }
+  };
+
+  window.retakeFoto = function() {
+    selfieData = null;
+    document.getElementById('selfie-preview').style.display = 'none';
+    document.getElementById('camera-wrap').style.display = 'block';
+    document.getElementById('btn-foto').style.display = 'inline-block';
+    document.getElementById('btn-retake').style.display = 'none';
+    document.getElementById('submit-section').style.display = 'none';
+    startCamera();
+  };
+
+  function renderRingkasan() {
+    const now = nowWIB();
+    const tipe = (todayAbsensi?.checkIn && !todayAbsensi?.checkOut) ? 'Check-out' : 'Check-in';
+    document.getElementById('ringkasan-absensi').innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Nama</span><strong>${user.nama}</strong></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Outlet</span><strong>${outletInfo?.nama || myOutlet}</strong></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Waktu</span><strong>${fmtTime(now)}</strong></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Jarak dari outlet</span><strong>${gpsData?.jarak}m ${gpsData?.sesuaiOutlet ? '✅' : '⚠️'}</strong></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Tipe</span><strong>${tipe}</strong></div>
+      </div>`;
+
+    // Update step 3
+    document.getElementById('step3-icon').textContent = '✅';
+    document.getElementById('step3-icon').className = 'step-icon step-done';
+  }
+
+  // Submit absensi
+  window.submitAbsensi = async function(tipe) {
+    if (!gpsData) { showError('Deteksi lokasi dulu!'); return; }
+    if (!selfieData) { showError('Ambil selfie dulu!'); return; }
+
+    const btn = tipe === 'checkin' ? document.getElementById('btn-checkin') : document.getElementById('btn-checkout');
+    btn.disabled = true; btn.textContent = '⏳ Menyimpan...';
+
+    try {
+      const now = nowWIB();
+      const waktuWIB = fmtTime(now);
+      const hour = now.getHours();
+      const shift = hour < 12 ? 'Pagi' : 'Sore';
+
+      // Cek ketepatan waktu — ambil setting dari Firestore
+      let statusCheckin = 'Tepat Waktu';
+      let isTelat = false;
+      try {
+        const settingSnap = await getDocs(query(collection(db, "setting_absensi"), where("outlet", "==", myOutlet)));
+        if (!settingSnap.empty) {
+          const setting = settingSnap.docs[0].data();
+          const batasJam = shift === 'Pagi' ? setting.batasPagi : setting.batasSore;
+          if (batasJam) {
+            const [bH, bM] = batasJam.split(':').map(Number);
+            const batasMenit = bH * 60 + bM;
+            const nowMenit = hour * 60 + now.getMinutes();
+            if (nowMenit > batasMenit && tipe === 'checkin') {
+              const selisih = nowMenit - batasMenit;
+              statusCheckin = `Terlambat ${selisih} menit`;
+              isTelat = true;
+            }
+          }
+        }
+      } catch(e) { console.warn('Setting tidak ditemukan:', e); }
+
+      const data = {
+        userId: user.id, userNama: user.nama,
+        outlet: myOutlet, outletNama: outletInfo?.nama || myOutlet,
+        tanggal: todayStr, shift,
+        gps: gpsData, selfie: selfieData,
+      };
+
+      if (tipe === 'checkin') {
+        data.checkIn = now.toISOString();
+        data.checkInTime = waktuWIB;
+        data.statusCheckin = statusCheckin;
+        data.isTelat = isTelat;
+        data.createdAt = now.toISOString();
+      } else {
+        data.checkIn = todayAbsensi.checkIn;
+        data.checkInTime = todayAbsensi.checkInTime;
+        data.statusCheckin = todayAbsensi.statusCheckin;
+        data.isTelat = todayAbsensi.isTelat;
+        data.checkOut = now.toISOString();
+        data.checkOutTime = waktuWIB;
+        data.selfieCheckout = selfieData;
+        data.gpsCheckout = gpsData;
+        data.createdAt = todayAbsensi.createdAt;
+      }
+
+      // Simpan ke Firestore
+      let docId;
+      if (tipe === 'checkin') {
+        const ref = await addDoc(collection(db, "absensi_gps"), data);
+        docId = ref.id;
+      } else {
+        const { updateDoc, doc: firestoreDoc } = await import('https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js');
+        await updateDoc(firestoreDoc(db, "absensi_gps", todayAbsensi.id), {
+          checkOut: data.checkOut, checkOutTime: data.checkOutTime,
+          selfieCheckout: selfieData, gpsCheckout: gpsData
+        });
+      }
+
+      // Notif Telegram
+      try {
+        const lokasiStatus = gpsData.sesuaiOutlet ? '✅ Sesuai lokasi outlet' : `⚠️ Di luar radius (${gpsData.jarak}m)`;
+        const telatInfo = isTelat ? `\n⏰ *${statusCheckin}*` : '\n✅ Tepat Waktu';
+        const pesan = `${tipe === 'checkin' ? '🟢' : '🔴'} *${tipe === 'checkin' ? 'CHECK-IN' : 'CHECK-OUT'}*\n\n` +
+          `👤 *${user.nama}*\n` +
+          `🏪 ${outletInfo?.nama || myOutlet}\n` +
+          `📅 ${todayStr.split('-').reverse().join('/')} — Shift ${shift}\n` +
+          `🕐 ${waktuWIB}` +
+          telatInfo +
+          `\n📍 ${lokasiStatus}\n` +
+          `📌 Jarak: ${gpsData.jarak}m dari outlet`;
+        await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ chat_id: TELEGRAM_CHAT, text: pesan, parse_mode: 'Markdown' })
+        });
+      } catch(e) { console.warn('Telegram gagal:', e); }
+
+      // Sukses
+      document.getElementById('main-success').style.display = 'block';
+      document.getElementById('main-success').innerHTML = `
+        <div style="font-size:24px;margin-bottom:8px">${tipe === 'checkin' ? '✅' : '👋'}</div>
+        <div style="font-weight:600;font-size:15px">${tipe === 'checkin' ? 'Check-in Berhasil!' : 'Check-out Berhasil!'}</div>
+        <div style="font-size:12px;margin-top:4px">${waktuWIB} · ${statusCheckin}</div>
+      `;
+      document.getElementById('submit-section').style.display = 'none';
+      document.getElementById('gps-section').style.display = 'none';
+      document.getElementById('selfie-section').style.display = 'none';
+
+    } catch(e) {
+      showError('Gagal simpan: ' + e.message);
+      btn.disabled = false;
+      btn.textContent = tipe === 'checkin' ? '✅ CHECK-IN Sekarang' : '🚪 CHECK-OUT Sekarang';
+    }
+  };
+
+  function showError(msg) {
+    const el = document.getElementById('main-error');
+    el.textContent = msg; el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 5000);
+  }
+</script>
+</body>
+</html>
