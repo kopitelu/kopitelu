@@ -1224,6 +1224,7 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: TELEGRAM_CHAT,
+          message_thread_id: TELEGRAM_TOPIC,
           text: `⚠️ *ALERT STOK GUDANG*\n\n${alertItems.length} item perlu direstok:\n\n${itemList}\n\n_Segera hubungi supplier!_`,
           parse_mode: 'Markdown'
         })
