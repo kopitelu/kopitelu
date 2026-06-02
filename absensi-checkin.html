@@ -166,7 +166,8 @@
   const db  = getFirestore(app);
 
   const TELEGRAM_TOKEN = '8613637829:AAERHEyn8KfJRcJIDra-w3h-kgYcS29WhMQ';
-  const TELEGRAM_CHAT  = '7202941698';
+  const TELEGRAM_CHAT  = '-1004291425176';
+  const TELEGRAM_TOPIC_ABSENSI = 8;
 
   // ── KONSTANTA FOTO ────────────────────────────────────────
   const FOTO_MAX_PX      = 480;  // max sisi terpanjang (pixel)
@@ -528,7 +529,7 @@
           `📌 Jarak: ${gpsData.jarak}m dari outlet`;
         await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
           method: 'POST', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ chat_id: TELEGRAM_CHAT, text: pesan, parse_mode: 'Markdown' })
+          body: JSON.stringify({ chat_id: TELEGRAM_CHAT, message_thread_id: TELEGRAM_TOPIC_ABSENSI, text: pesan, parse_mode: 'Markdown' })
         });
       } catch(e) { console.warn('Telegram gagal:', e); }
 
