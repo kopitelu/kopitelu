@@ -69,27 +69,22 @@
     <button class="btn-link" onclick="doLogout()">Keluar →</button>
   </div>
 </header>
-
-<!-- Page Nav -->
 <nav style="background:#fff;border-bottom:1px solid #e5d8c8;display:flex">
   <a href="home.html" style="flex:1;padding:12px;text-align:center;font-size:13px;font-weight:500;color:#7a6652;border-bottom:2.5px solid transparent;text-decoration:none;font-family:'DM Sans',sans-serif">← Menu</a>
   <a href="input.html" style="flex:2;padding:12px;text-align:center;font-size:13px;font-weight:500;color:#92400e;border-bottom:2.5px solid #92400e;text-decoration:none;font-family:'DM Sans',sans-serif">📋 Laporan Shift</a>
 </nav>
+<main>
   <div class="success-banner" id="success-banner">
     <div style="font-size:24px">✅</div>
     <div><strong style="font-size:14px;color:#065f46;display:block">Laporan berhasil disimpan!</strong><span style="font-size:12px;color:#047857">Data sudah masuk ke Firebase.</span></div>
   </div>
-
-  <!-- Warning duplikat -->
   <div id="duplicate-warning" style="display:none;background:#fef2f2;border:1.5px solid #fecaca;border-radius:14px;padding:14px 16px;align-items:center;gap:12px">
     <div style="font-size:22px">⛔</div>
     <div>
       <strong style="font-size:13px;color:#991b1b;display:block">Laporan sudah pernah diinput!</strong>
-      <span style="font-size:12px;color:#b91c1c">Shift ini di outlet ini sudah ada laporannya. Hubungi owner jika ada kesalahan.</span>
+      <span style="font-size:12px;color:#b91c1c">Shift ini di outlet ini sudah ada laporannya.</span>
     </div>
   </div>
-
-  <!-- Info Shift -->
   <div class="card">
     <div class="card-title">📋 Info Shift</div>
     <div class="grid-2" style="margin-bottom:12px">
@@ -107,34 +102,24 @@
       </div>
     </div>
     <div class="form-group"><label>Outlet</label>
-      <select id="f-outlet">
-        <option value="">-- Memuat outlet... --</option>
-      </select>
+      <select id="f-outlet"><option value="">-- Memuat outlet... --</option></select>
     </div>
   </div>
-
-  <!-- Absensi -->
   <div class="card">
     <div class="card-title">👥 Absensi Karyawan</div>
     <div class="karyawan-add">
-      <select id="f-karyawan-select">
-        <option value="">-- Pilih karyawan yang bertugas --</option>
-      </select>
+      <select id="f-karyawan-select"><option value="">-- Pilih karyawan yang bertugas --</option></select>
       <button class="btn-add" id="btn-add-karyawan">+ Tambah</button>
     </div>
     <div class="tags" id="karyawan-tags"></div>
   </div>
-
-  <!-- Penjualan -->
   <div class="card">
     <div class="card-title">💰 Data Penjualan</div>
-
     <div class="divider-label">Modal Awal</div>
     <div class="form-group" style="margin-bottom:16px">
       <label>Starting Cash — Uang di Laci Saat Buka (Rp)</label>
       <div class="input-prefix"><span>Rp</span><input type="number" id="f-starting-cash" placeholder="0" min="0"/></div>
     </div>
-
     <div class="divider-label">Penjualan</div>
     <div class="form-group" style="margin-bottom:12px">
       <label>Penjualan Cash (Rp)</label>
@@ -152,14 +137,11 @@
       <label>Diskon Member (Rp)</label>
       <div class="input-prefix"><span>Rp</span><input type="number" id="f-diskon" placeholder="0" min="0"/></div>
     </div>
-
     <div class="total-box total-omset">
       <span class="lbl">Total Omset</span>
       <span class="val" id="total-omset-val">Rp 0</span>
     </div>
   </div>
-
-  <!-- Pengeluaran -->
   <div class="card">
     <div class="card-title">🧾 Pengeluaran</div>
     <div id="peng-rows"></div>
@@ -169,8 +151,6 @@
       <span class="val" id="total-peng-val">Rp 0</span>
     </div>
   </div>
-
-  <!-- Kas Akhir -->
   <div class="card">
     <div class="card-title">🏦 Kas Akhir</div>
     <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#166534;line-height:1.6">
@@ -181,13 +161,10 @@
       <div class="input-prefix"><span>Rp</span><input type="text" inputmode="numeric" id="f-kas-akhir" placeholder="0"/></div>
     </div>
   </div>
-
-  <!-- Catatan -->
   <div class="card">
     <div class="card-title">📝 Catatan Shift</div>
     <div class="form-group"><textarea id="f-catatan" placeholder="Catatan kejadian khusus, kendala, atau info penting lainnya..."></textarea></div>
   </div>
-
   <button class="btn-submit" id="btn-submit">💾 Simpan Laporan Shift</button>
 </main>
 
@@ -195,433 +172,247 @@
   import { Auth, OutletManager } from './js/auth.js';
   import { Storage } from './js/firebase.js';
 
+  // ── TELEGRAM CONFIG ───────────────────────────────────────
+  const TG_TOKEN   = '8613637829:AAERHEyn8KfJRcJIDra-w3h-kgYcS29WhMQ';
+  const TG_CHAT    = '-1004291425176';
+  const TG_TOPIC   = { laporan: 2, setoran: 3, gudang: 7, absensi: 8 };
+
+  async function kirimTG(pesan, topik) {
+    const body = { chat_id: TG_CHAT, text: pesan, parse_mode: 'Markdown', message_thread_id: TG_TOPIC[topik] };
+    await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+  }
+
   const user = Auth.requireAuth();
   if (!user) throw new Error();
-
   document.getElementById('user-badge').textContent = user.nama;
   if (user.role === 'owner') document.getElementById('link-dashboard').style.display = 'inline';
   window.doLogout = () => Auth.logout();
 
-  // Set tanggal hari ini
   const today = new Date();
   document.getElementById('f-tanggal').value = today.toISOString().split('T')[0];
 
-  // Tampilkan tanggal dalam format DD/MM/YYYY di label
-  function formatTanggal(val) {
-    if (!val) return '';
-    const [y, m, d] = val.split('-');
-    return `${d}/${m}/${y}`;
-  }
+  function formatTanggal(val) { if (!val) return ''; const [y,m,d]=val.split('-'); return `${d}/${m}/${y}`; }
   const tanggalInput = document.getElementById('f-tanggal');
   const tanggalLabel = document.getElementById('tanggal-display');
-  function updateTanggalDisplay() {
-    if (tanggalLabel) tanggalLabel.textContent = formatTanggal(tanggalInput.value);
-  }
+  function updateTanggalDisplay() { if (tanggalLabel) tanggalLabel.textContent = formatTanggal(tanggalInput.value); }
   tanggalInput.addEventListener('change', updateTanggalDisplay);
   updateTanggalDisplay();
 
-  // Isi dropdown outlet dari Firestore sesuai hak akses user
   async function loadOutletOptions() {
     const sel = document.getElementById('f-outlet');
     sel.innerHTML = '';
     const allOutlets = await OutletManager.getAll();
-    const allowed = user.role === 'owner'
-      ? allOutlets.map(o => o.id)
-      : (user.outlets || (user.outlet ? [user.outlet] : []));
-
-    if (allowed.length === 0) {
-      sel.innerHTML = '<option value="">Tidak ada outlet terdaftar</option>';
-      return;
-    }
-
-    allOutlets.filter(o => allowed.includes(o.id)).forEach(o => {
-      const opt = document.createElement('option');
-      opt.value = o.id;
-      opt.textContent = o.nama;
-      sel.appendChild(opt);
+    const allowed = user.role === 'owner' ? allOutlets.map(o=>o.id) : (user.outlets||(user.outlet?[user.outlet]:[]));
+    if (allowed.length === 0) { sel.innerHTML = '<option value="">Tidak ada outlet terdaftar</option>'; return; }
+    allOutlets.filter(o=>allowed.includes(o.id)).forEach(o => {
+      const opt = document.createElement('option'); opt.value=o.id; opt.textContent=o.nama; sel.appendChild(opt);
     });
-
-    if (allowed.length === 1) {
-      sel.value = allowed[0];
-      sel.disabled = true;
-    } else if (user.selectedOutlet && allowed.includes(user.selectedOutlet)) {
-      sel.value = user.selectedOutlet;
-    }
+    if (allowed.length===1) { sel.value=allowed[0]; sel.disabled=true; }
+    else if (user.selectedOutlet && allowed.includes(user.selectedOutlet)) sel.value=user.selectedOutlet;
   }
   await loadOutletOptions();
 
-  // Load daftar pegawai — filter sesuai outlet yang dipilih
   async function loadPegawaiList() {
     const sel = document.getElementById('f-karyawan-select');
     const outletSel = document.getElementById('f-outlet');
-
     async function refresh() {
       const selectedOutlet = outletSel.value;
       sel.innerHTML = '<option value="">-- Pilih karyawan yang bertugas --</option>';
       try {
         const users = await Auth.getUsers();
-        const filtered = users.filter(u => {
-          const outlets = u.outlets || (u.outlet ? [u.outlet] : []);
-          return outlets.includes(selectedOutlet);
+        users.filter(u=>(u.outlets||(u.outlet?[u.outlet]:[])).includes(selectedOutlet)).forEach(u => {
+          const opt=document.createElement('option'); opt.value=u.nama; opt.textContent=u.nama; sel.appendChild(opt);
         });
-        filtered.forEach(u => {
-          const opt = document.createElement('option');
-          opt.value = u.nama;
-          opt.textContent = u.nama;
-          sel.appendChild(opt);
-        });
-      } catch(e) { console.error('Gagal load pegawai', e); }
+      } catch(e) { console.error('Gagal load pegawai',e); }
     }
-
     outletSel.addEventListener('change', refresh);
     await refresh();
   }
   loadPegawaiList();
 
-  // Karyawan tags
   let karyawanList = [];
   function renderTags() {
     document.getElementById('karyawan-tags').innerHTML =
-      karyawanList.map((n, i) =>
-        `<span class="tag">👤 ${n}<button class="tag-x" onclick="removeK(${i})">×</button></span>`
-      ).join('');
+      karyawanList.map((n,i)=>`<span class="tag">👤 ${n}<button class="tag-x" onclick="removeK(${i})">×</button></span>`).join('');
   }
-  window.removeK = i => { karyawanList.splice(i, 1); renderTags(); };
-
+  window.removeK = i => { karyawanList.splice(i,1); renderTags(); };
   function addKaryawan() {
-    const sel = document.getElementById('f-karyawan-select');
-    const n = sel.value;
+    const sel=document.getElementById('f-karyawan-select'); const n=sel.value;
     if (!n) return;
     if (karyawanList.includes(n)) { alert('Karyawan sudah ditambahkan!'); return; }
-    karyawanList.push(n);
-    sel.value = '';
-    renderTags();
+    karyawanList.push(n); sel.value=''; renderTags();
   }
   document.getElementById('btn-add-karyawan').addEventListener('click', addKaryawan);
 
-  // Pengeluaran
-  let pengList = [{ nama: 'Bahan Baku', jumlah: 0 }];
-
+  let pengList = [{ nama:'Bahan Baku', jumlah:0 }];
   function savePengValues() {
-    pengList.forEach((p, i) => {
-      const namaEl = document.querySelector(`#peng-rows .peng-row:nth-child(${i+1}) input[type="text"]`);
-      const jumlahEl = document.querySelector(`#peng-rows .peng-row:nth-child(${i+1}) input.peng-jumlah`);
-      if (namaEl) p.nama = namaEl.value;
-      if (jumlahEl) p.jumlah = jumlahEl.value.replace(/\./g,'').replace(/[^\d]/g,'');
+    pengList.forEach((p,i) => {
+      const namaEl=document.querySelector(`#peng-rows .peng-row:nth-child(${i+1}) input[type="text"]`);
+      const jumlahEl=document.querySelector(`#peng-rows .peng-row:nth-child(${i+1}) input.peng-jumlah`);
+      if (namaEl) p.nama=namaEl.value;
+      if (jumlahEl) p.jumlah=jumlahEl.value.replace(/\./g,'').replace(/[^\d]/g,'');
     });
   }
-
   function renderPeng() {
-    document.getElementById('peng-rows').innerHTML = pengList.map((p, i) => `
+    document.getElementById('peng-rows').innerHTML = pengList.map((p,i)=>`
       <div class="peng-row">
-        <input type="text" placeholder="Nama pengeluaran" value="${p.nama}"
-          oninput="pengList[${i}].nama=this.value"/>
+        <input type="text" placeholder="Nama pengeluaran" value="${p.nama}" oninput="pengList[${i}].nama=this.value"/>
         <input type="text" inputmode="numeric" class="peng-jumlah" placeholder="0"
-          value="${p.jumlah ? Number(p.jumlah).toLocaleString('id-ID') : ''}"
+          value="${p.jumlah?Number(p.jumlah).toLocaleString('id-ID'):''}"
           oninput="
             const raw=this.value.replace(/\\./g,'').replace(/[^\\d]/g,'');
             const num=parseInt(raw||'0',10);
-            const pos=this.selectionStart;
-            const prev=this.value.length;
+            const pos=this.selectionStart;const prev=this.value.length;
             this.value=num===0?'':num.toLocaleString('id-ID');
-            const diff=this.value.length-prev;
-            this.setSelectionRange(pos+diff,pos+diff);
-            pengList[${i}].jumlah=raw;
-            calcPeng();
-          "/>
+            const diff=this.value.length-prev;this.setSelectionRange(pos+diff,pos+diff);
+            pengList[${i}].jumlah=raw;calcPeng();"/>
         <button class="peng-del" onclick="removePeng(${i})">×</button>
       </div>`).join('');
     calcPeng();
   }
-  window.removePeng = i => { savePengValues(); pengList.splice(i, 1); renderPeng(); };
+  window.removePeng = i => { savePengValues(); pengList.splice(i,1); renderPeng(); };
   window.pengList = pengList;
+  document.getElementById('btn-add-peng').addEventListener('click',()=>{ savePengValues(); pengList.push({nama:'',jumlah:0}); renderPeng(); });
 
-  document.getElementById('btn-add-peng').addEventListener('click', () => {
-    savePengValues();
-    pengList.push({ nama: '', jumlah: 0 }); renderPeng();
-  });
+  function parseAngka(val) { if (!val&&val!==0) return 0; return parseInt(String(val).trim().replace(/[^\d]/g,'') || '0',10); }
+  function fmt(n) { return 'Rp '+Math.round(n).toLocaleString('id-ID'); }
 
-  // Parse angka — robust, terima format apapun
-  // 18.182 → 18182, 1.500.000 → 1500000, 1500000 → 1500000
-  function parseAngka(val) {
-    if (!val && val !== 0) return 0;
-    const str = String(val).trim();
-    // Hapus semua karakter non-digit
-    const digitsOnly = str.replace(/[^\d]/g, '');
-    return parseInt(digitsOnly || '0', 10);
-  }
-
-  // Format angka lengkap dengan titik ribuan
-  function fmt(n) { return 'Rp ' + Math.round(n).toLocaleString('id-ID'); }
-
-  // Auto-format field angka — hanya terima digit, auto-tambah titik ribuan
   function setupAngkaInput(id) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.setAttribute('type', 'text');
-    el.setAttribute('inputmode', 'numeric');
-    el.setAttribute('placeholder', '0');
-
-    el.addEventListener('keydown', function(e) {
-      // Izinkan: angka, backspace, delete, arrow, tab, home, end
-      const allowed = ['Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab','Home','End'];
-      if (allowed.includes(e.key)) return;
-      // Izinkan Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
-      if (e.ctrlKey || e.metaKey) return;
-      // Blokir semua karakter non-digit termasuk titik dan koma
+    const el=document.getElementById(id); if (!el) return;
+    el.setAttribute('type','text'); el.setAttribute('inputmode','numeric'); el.setAttribute('placeholder','0');
+    el.addEventListener('keydown',function(e){
+      const allowed=['Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab','Home','End'];
+      if (allowed.includes(e.key)||e.ctrlKey||e.metaKey) return;
       if (!/^\d$/.test(e.key)) e.preventDefault();
     });
-
-    el.addEventListener('input', function() {
-      // Ambil hanya digit
-      const digits = this.value.replace(/[^\d]/g, '');
-      const num = parseInt(digits || '0', 10);
-      const formatted = num === 0 ? '' : num.toLocaleString('id-ID');
-      // Update value tanpa menggeser kursor terlalu jauh
-      if (this.value !== formatted) {
-        const pos = this.selectionStart;
-        const prevLen = this.value.length;
-        this.value = formatted;
-        const diff = formatted.length - prevLen;
-        const newPos = Math.max(0, pos + diff);
-        this.setSelectionRange(newPos, newPos);
+    el.addEventListener('input',function(){
+      const digits=this.value.replace(/[^\d]/g,'');
+      const num=parseInt(digits||'0',10);
+      const formatted=num===0?'':num.toLocaleString('id-ID');
+      if (this.value!==formatted){
+        const pos=this.selectionStart; const prevLen=this.value.length;
+        this.value=formatted;
+        const newPos=Math.max(0,pos+(formatted.length-prevLen));
+        this.setSelectionRange(newPos,newPos);
       }
     });
-
-    // Saat paste — bersihkan otomatis
-    el.addEventListener('paste', function(e) {
+    el.addEventListener('paste',function(e){
       e.preventDefault();
-      const pasted = (e.clipboardData || window.clipboardData).getData('text');
-      const digits = pasted.replace(/[^\d]/g, '');
-      const num = parseInt(digits || '0', 10);
-      this.value = num === 0 ? '' : num.toLocaleString('id-ID');
+      const pasted=(e.clipboardData||window.clipboardData).getData('text');
+      const num=parseInt(pasted.replace(/[^\d]/g,'')||'0',10);
+      this.value=num===0?'':num.toLocaleString('id-ID');
       this.dispatchEvent(new Event('input'));
     });
   }
-
-  const ANGKA_FIELDS = ['f-starting-cash','f-cash','f-edc','f-grab','f-diskon','f-kas-akhir'];
+  const ANGKA_FIELDS=['f-starting-cash','f-cash','f-edc','f-grab','f-diskon','f-kas-akhir'];
   ANGKA_FIELDS.forEach(setupAngkaInput);
+  function getAngka(id){return parseAngka(document.getElementById(id).value);}
+  function calcPeng(){const t=pengList.reduce((s,p)=>s+(parseAngka(p.jumlah)||0),0);document.getElementById('total-peng-val').textContent=fmt(t);}
+  function calcOmset(){const c=getAngka('f-cash'),e=getAngka('f-edc'),g=getAngka('f-grab'),d=getAngka('f-diskon');document.getElementById('total-omset-val').textContent=fmt(c+e+g-d);}
 
-  function getAngka(id) { return parseAngka(document.getElementById(id).value); }
-
-  function calcPeng() {
-    const t = pengList.reduce((s, p) => s + (parseAngka(p.jumlah) || 0), 0);
-    document.getElementById('total-peng-val').textContent = fmt(t);
-  }
-
-  function calcKas() {
-    // Hitung di balik layar — tidak ditampilkan ke pegawai
-  }
-
-  function calcOmset() {
-    const c = getAngka('f-cash');
-    const e = getAngka('f-edc');
-    const g = getAngka('f-grab');
-    const d = getAngka('f-diskon');
-    document.getElementById('total-omset-val').textContent = fmt(c + e + g - d);
-  }
-
-  // Cek duplikat saat outlet/tanggal/shift berubah
   async function checkDuplicate() {
-    const tanggal = document.getElementById('f-tanggal').value;
-    const shift   = document.getElementById('f-shift').value;
-    const outlet  = document.getElementById('f-outlet').value;
-    if (!tanggal || !shift || !outlet) return;
-
-    const btn     = document.getElementById('btn-submit');
-    const warning = document.getElementById('duplicate-warning');
-
+    const tanggal=document.getElementById('f-tanggal').value;
+    const shift=document.getElementById('f-shift').value;
+    const outlet=document.getElementById('f-outlet').value;
+    if (!tanggal||!shift||!outlet) return;
+    const btn=document.getElementById('btn-submit'); const warning=document.getElementById('duplicate-warning');
     try {
-      const isDuplicate = await Storage.checkDuplicate(outlet, tanggal, shift);
-      if (isDuplicate) {
-        warning.style.display = 'flex';
-        btn.disabled = true;
-        btn.textContent = '⛔ Laporan Sudah Ada';
-        btn.style.background = '#d1b89a';
-      } else {
-        warning.style.display = 'none';
-        btn.disabled = false;
-        btn.textContent = '💾 Simpan Laporan Shift';
-        btn.style.background = '';
-      }
-    } catch(e) {
-      // Kalau gagal cek, tetap izinkan submit
-      console.warn('checkDuplicate error:', e);
-      warning.style.display = 'none';
-      btn.disabled = false;
-      btn.textContent = '💾 Simpan Laporan Shift';
-      btn.style.background = '';
-    }
+      const isDuplicate=await Storage.checkDuplicate(outlet,tanggal,shift);
+      if (isDuplicate){warning.style.display='flex';btn.disabled=true;btn.textContent='⛔ Laporan Sudah Ada';btn.style.background='#d1b89a';}
+      else{warning.style.display='none';btn.disabled=false;btn.textContent='💾 Simpan Laporan Shift';btn.style.background='';}
+    } catch(e){console.warn('checkDuplicate error:',e);warning.style.display='none';btn.disabled=false;btn.textContent='💾 Simpan Laporan Shift';btn.style.background='';}
   }
+  ['f-tanggal','f-shift','f-outlet'].forEach(id=>document.getElementById(id)?.addEventListener('change',checkDuplicate));
+  setTimeout(checkDuplicate,1000);
 
-  ['f-tanggal','f-shift','f-outlet'].forEach(id => {
-    document.getElementById(id)?.addEventListener('change', checkDuplicate);
-  });
-
-  // Jalankan sekali saat load
-  setTimeout(checkDuplicate, 1000);
-
-  // Submit
   document.getElementById('btn-submit').addEventListener('click', async () => {
-    const tanggal        = document.getElementById('f-tanggal').value;
-    const shift          = document.getElementById('f-shift').value;
-    const outlet         = document.getElementById('f-outlet').value;
-    const startingCash   = getAngka('f-starting-cash');
-    const cash           = getAngka('f-cash');
-    const edc            = getAngka('f-edc');
-    const grab           = getAngka('f-grab');
-    const diskon         = getAngka('f-diskon');
-    const kasAkhirAktual = getAngka('f-kas-akhir');
-    const catatan        = document.getElementById('f-catatan').value;
-
-    if (!tanggal) { alert('Pilih tanggal dulu!'); return; }
-    if (karyawanList.length === 0) { alert('Tambahkan minimal 1 karyawan yang bertugas!'); return; }
-
-    const btn = document.getElementById('btn-submit');
-    btn.disabled = true; btn.textContent = '⏳ Memeriksa...';
-
+    const tanggal=document.getElementById('f-tanggal').value;
+    const shift=document.getElementById('f-shift').value;
+    const outlet=document.getElementById('f-outlet').value;
+    const startingCash=getAngka('f-starting-cash');
+    const cash=getAngka('f-cash'); const edc=getAngka('f-edc');
+    const grab=getAngka('f-grab'); const diskon=getAngka('f-diskon');
+    const kasAkhirAktual=getAngka('f-kas-akhir');
+    const catatan=document.getElementById('f-catatan').value;
+    if (!tanggal){alert('Pilih tanggal dulu!');return;}
+    if (karyawanList.length===0){alert('Tambahkan minimal 1 karyawan!');return;}
+    const btn=document.getElementById('btn-submit');
+    btn.disabled=true; btn.textContent='⏳ Memeriksa...';
     try {
-      // Cek duplikat sekali lagi sebelum simpan
-      const isDuplicate = await Storage.checkDuplicate(outlet, tanggal, shift);
-      if (isDuplicate) {
-        alert('Laporan shift ini sudah pernah diinput!');
-        btn.disabled = true;
-        btn.textContent = '⛔ Laporan Sudah Ada';
-        return;
-      }
-
-      btn.textContent = '⏳ Menyimpan...';
-      const now = new Date();
-      const omset = cash + edc + grab - diskon;
+      const isDuplicate=await Storage.checkDuplicate(outlet,tanggal,shift);
+      if (isDuplicate){alert('Laporan shift ini sudah pernah diinput!');btn.disabled=true;btn.textContent='⛔ Laporan Sudah Ada';return;}
+      btn.textContent='⏳ Menyimpan...';
+      const now=new Date();
+      const omset=cash+edc+grab-diskon;
       savePengValues();
-    const totalPengeluaran = pengList.filter(p => p.nama).reduce((s, p) => s + parseAngka(p.jumlah), 0);
-      const kasAkhirTeoritis = startingCash + cash - totalPengeluaran;
-      const selisihKas = kasAkhirAktual > 0 ? kasAkhirAktual - kasAkhirTeoritis : null;
-      const outletNama = (await OutletManager.getNamesMap())[outlet] || outlet;
-      const waktuInput = now.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour12: false });
+      const totalPengeluaran=pengList.filter(p=>p.nama).reduce((s,p)=>s+parseAngka(p.jumlah),0);
+      const kasAkhirTeoritis=startingCash+cash-totalPengeluaran;
+      const selisihKas=kasAkhirAktual>0?kasAkhirAktual-kasAkhirTeoritis:null;
+      const outletNama=(await OutletManager.getNamesMap())[outlet]||outlet;
+      const waktuInput=now.toLocaleString('id-ID',{timeZone:'Asia/Jakarta',hour12:false});
 
       await Storage.saveReport({
-        outlet, shift, tanggal, startingCash, cash, edc, grab, diskon, omset,
-        pengeluaran: pengList.filter(p => p.nama).map(p => ({ nama: p.nama, jumlah: parseAngka(p.jumlah) })),
-        totalPengeluaran,
-        kasAkhirAktual, kasAkhirTeoritis, selisihKas,
-        karyawan: [...karyawanList],
-        catatan,
-        inputBy: user.username,
-        inputByNama: user.nama,
-        createdAt: now.toISOString(),
-        createdAtWIB: waktuInput
+        outlet,shift,tanggal,startingCash,cash,edc,grab,diskon,omset,
+        pengeluaran:pengList.filter(p=>p.nama).map(p=>({nama:p.nama,jumlah:parseAngka(p.jumlah)})),
+        totalPengeluaran,kasAkhirAktual,kasAkhirTeoritis,selisihKas,
+        karyawan:[...karyawanList],catatan,
+        inputBy:user.username,inputByNama:user.nama,
+        createdAt:now.toISOString(),createdAtWIB:waktuInput
       });
 
-      // Kirim notifikasi Telegram
-      btn.textContent = '📨 Mengirim notifikasi...';
+      // Notif Telegram → topik Laporan Shift
+      btn.textContent='📨 Mengirim notifikasi...';
       try {
-        const fmtRp = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
-        const pengeluaranDetail = pengList.filter(p => p.nama && parseAngka(p.jumlah) > 0)
-          .map(p => `  • ${p.nama}: ${fmtRp(parseAngka(p.jumlah))}`).join('\n') || '  • -';
-        const kasInfo = kasAkhirAktual > 0
-          ? `\n💰 *Kas Akhir*\n  • Teoritis: ${fmtRp(kasAkhirTeoritis)}\n  • Aktual: ${fmtRp(kasAkhirAktual)}\n  • Selisih: ${selisihKas === 0 ? '✅ Rp 0' : (selisihKas > 0 ? '⚠️ +' : '🚨 ') + fmtRp(selisihKas)}`
-          : '';
+        const fmtRp=n=>'Rp '+Math.round(n).toLocaleString('id-ID');
+        const pengeluaranDetail=pengList.filter(p=>p.nama&&parseAngka(p.jumlah)>0)
+          .map(p=>`  • ${p.nama}: ${fmtRp(parseAngka(p.jumlah))}`).join('\n')||'  • -';
+        const kasInfo=kasAkhirAktual>0
+          ?`\n💰 *Kas Akhir*\n  • Teoritis: ${fmtRp(kasAkhirTeoritis)}\n  • Aktual: ${fmtRp(kasAkhirAktual)}\n  • Selisih: ${selisihKas===0?'✅ Rp 0':(selisihKas>0?'⚠️ +':'🚨 ')+fmtRp(selisihKas)}`:'';
 
-        // Cek Starting Cash vs Kas Akhir shift sebelumnya
-        let startingCashInfo = '';
+        let startingCashInfo='';
         try {
-          const PREV_SHIFT = { Sore: 'Pagi', Pagi: 'Sore' };
-          const prevShift = PREV_SHIFT[shift];
-          if (prevShift) {
-            const nowWIB = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
-            const prevTanggal = shift === 'Pagi'
-              ? (() => { const d = new Date(nowWIB); d.setDate(d.getDate() - 1); return d.toISOString().split('T')[0]; })()
-              : tanggal;
-
-            const prevReports = await Storage.getReports(outlet, prevTanggal, prevTanggal);
-            const prevReport = prevReports.find(r => r.shift === prevShift);
-
-            if (prevReport && prevReport.kasAkhirAktual > 0) {
-              // Cek setoran antar shift
-              const setoranSnap = await Storage.getSetoranByDate(prevTanggal);
-              const setoranOutlet = setoranSnap.filter(s =>
-                s.outlet === outlet &&
-                s.createdAt > (prevReport.createdAt || '') &&
-                s.createdAt < now.toISOString()
-              );
-              const totalSetoranAntarShift = setoranOutlet.reduce((s, r) => s + (r.nominal || 0), 0);
-              const expectedStarting = prevReport.kasAkhirAktual - totalSetoranAntarShift;
-              const selisihStarting = startingCash - expectedStarting;
-
-              if (selisihStarting === 0) {
-                startingCashInfo = `\n✅ *Starting Cash sesuai* dengan kas shift ${prevShift}`;
-              } else {
-                startingCashInfo = `\n🚨 *Starting Cash tidak sesuai!*\n  • Seharusnya: ${fmtRp(expectedStarting)}\n  • Diinput: ${fmtRp(startingCash)}\n  • Selisih: ${selisihStarting > 0 ? '+' : ''}${fmtRp(selisihStarting)}`;
-              }
+          const PREV_SHIFT={Sore:'Pagi',Pagi:'Sore'};
+          const prevShift=PREV_SHIFT[shift];
+          if (prevShift){
+            const nowWIB=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Jakarta'}));
+            const prevTanggal=shift==='Pagi'?(()=>{const d=new Date(nowWIB);d.setDate(d.getDate()-1);return d.toISOString().split('T')[0];})():tanggal;
+            const prevReports=await Storage.getReports(outlet,prevTanggal,prevTanggal);
+            const prevReport=prevReports.find(r=>r.shift===prevShift);
+            if (prevReport&&prevReport.kasAkhirAktual>0){
+              const setoranSnap=await Storage.getSetoranByDate(prevTanggal);
+              const setoranOutlet=setoranSnap.filter(s=>s.outlet===outlet&&s.createdAt>(prevReport.createdAt||'')&&s.createdAt<now.toISOString());
+              const totalSetoranAntarShift=setoranOutlet.reduce((s,r)=>s+(r.nominal||0),0);
+              const expectedStarting=prevReport.kasAkhirAktual-totalSetoranAntarShift;
+              const selisihStarting=startingCash-expectedStarting;
+              if (selisihStarting===0) startingCashInfo=`\n✅ *Starting Cash sesuai* dengan kas shift ${prevShift}`;
+              else startingCashInfo=`\n🚨 *Starting Cash tidak sesuai!*\n  • Seharusnya: ${fmtRp(expectedStarting)}\n  • Diinput: ${fmtRp(startingCash)}\n  • Selisih: ${selisihStarting>0?'+':''}${fmtRp(selisihStarting)}`;
             }
           }
-        } catch(e) { console.warn('Starting cash check error:', e); }
+        } catch(e){console.warn('Starting cash check error:',e);}
 
-        const pesan = `☕ *LAPORAN SHIFT MASUK*\n\n` +
-          `🏪 *${outletNama}*\n` +
-          `📅 ${tanggal.split('-').reverse().join('/')} — Shift ${shift}\n` +
-          `👤 ${karyawanList.join(', ')}\n` +
-          `🕐 ${waktuInput}\n\n` +
-          `💵 *Penjualan*\n` +
-          `  • Cash: ${fmtRp(cash)}\n` +
-          `  • EDC: ${fmtRp(edc)}\n` +
-          `  • Grab: ${fmtRp(grab)}\n` +
-          `  • Diskon: ${fmtRp(diskon)}\n` +
-          `  • *Total Omset: ${fmtRp(omset)}*\n\n` +
-          `🧾 *Pengeluaran* (${fmtRp(totalPengeluaran)})\n${pengeluaranDetail}` +
-          kasInfo +
-          startingCashInfo +
-          (catatan ? `\n\n📝 _${catatan}_` : '') +
-          `\n\n_Diinput oleh: ${user.nama}_`;
+        const pesan=`☕ *LAPORAN SHIFT MASUK*\n\n🏪 *${outletNama}*\n📅 ${tanggal.split('-').reverse().join('/')} — Shift ${shift}\n👤 ${karyawanList.join(', ')}\n🕐 ${waktuInput}\n\n💵 *Penjualan*\n  • Cash: ${fmtRp(cash)}\n  • EDC: ${fmtRp(edc)}\n  • Grab: ${fmtRp(grab)}\n  • Diskon: ${fmtRp(diskon)}\n  • *Total Omset: ${fmtRp(omset)}*\n\n🧾 *Pengeluaran* (${fmtRp(totalPengeluaran)})\n${pengeluaranDetail}${kasInfo}${startingCashInfo}${catatan?`\n\n📝 _${catatan}_`:''}\n\n_Diinput oleh: ${user.nama}_`;
+        await kirimTG(pesan, 'laporan');
+      } catch(tgErr){console.warn('Notifikasi Telegram gagal:',tgErr);}
 
-        await fetch(`https://api.telegram.org/bot8613637829:AAERHEyn8KfJRcJIDra-w3h-kgYcS29WhMQ/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: '7202941698',
-            text: pesan,
-            parse_mode: 'Markdown'
-          })
-        });
-      } catch(tgErr) {
-        console.warn('Notifikasi Telegram gagal:', tgErr);
-        // Tidak gagalkan laporan meski notifikasi error
-      }
-
-      // Reset form
-      karyawanList = []; pengList = [{ nama: 'Bahan Baku', jumlah: 0 }];
+      karyawanList=[]; pengList=[{nama:'Bahan Baku',jumlah:0}];
       renderTags(); renderPeng(); calcOmset();
-      ANGKA_FIELDS.forEach(id => document.getElementById(id).value = '');
-      document.getElementById('f-catatan').value = '';
-      document.getElementById('f-tanggal').value = new Date().toISOString().split('T')[0];
-      updateTanggalDisplay();
-      checkDuplicate();
-
-      const banner = document.getElementById('success-banner');
-      banner.classList.add('show');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      setTimeout(() => banner.classList.remove('show'), 4000);
-    } catch(e) {
-      alert('Gagal menyimpan: ' + e.message);
-      btn.disabled = false;
-      btn.textContent = '💾 Simpan Laporan Shift';
-      btn.style.background = '';
+      ANGKA_FIELDS.forEach(id=>document.getElementById(id).value='');
+      document.getElementById('f-catatan').value='';
+      document.getElementById('f-tanggal').value=new Date().toISOString().split('T')[0];
+      updateTanggalDisplay(); checkDuplicate();
+      const banner=document.getElementById('success-banner');
+      banner.classList.add('show'); window.scrollTo({top:0,behavior:'smooth'});
+      setTimeout(()=>banner.classList.remove('show'),4000);
+    } catch(e){
+      alert('Gagal menyimpan: '+e.message);
+      btn.disabled=false; btn.textContent='💾 Simpan Laporan Shift'; btn.style.background='';
     } finally {
-      // Jangan re-enable kalau duplicate
-      const isDup = await Storage.checkDuplicate(
-        document.getElementById('f-outlet').value,
-        document.getElementById('f-tanggal').value,
-        document.getElementById('f-shift').value
-      );
-      if (!isDup) {
-        btn.disabled = false;
-        btn.textContent = '💾 Simpan Laporan Shift';
-        btn.style.background = '';
-      }
+      const isDup=await Storage.checkDuplicate(document.getElementById('f-outlet').value,document.getElementById('f-tanggal').value,document.getElementById('f-shift').value);
+      if (!isDup){btn.disabled=false;btn.textContent='💾 Simpan Laporan Shift';btn.style.background='';}
     }
   });
-
   renderPeng();
 </script>
 </body>
