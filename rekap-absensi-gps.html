@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rekap Absensi GPS — Kopi Telu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--brown:#92400e;--amber:#b45309;--light:#fffbf5;--card:#fff;--border:#e5d8c8;--text:#1c1410;--muted:#7a6652;--green:#059669;--red:#dc2626;--orange:#ea580c}
+    body{font-family:'DM Sans',sans-serif;background:var(--light);color:var(--text);min-height:100vh}
+    header{background:var(--brown);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px #92400e44}
+    .header-left{display:flex;align-items:center;gap:10px}
+    .logo{width:32px;height:32px;background:#78350f;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+    .app-name{font-family:'DM Serif Display',serif;font-size:17px}
+    .btn-link{color:#fcd34d;font-size:13px;cursor:pointer;background:none;border:none;text-decoration:none}
+    .user-badge{background:#78350f;padding:3px 10px;border-radius:99px;font-size:12px;color:#fff}
+    main{max-width:900px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:40px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px}
+    .filter-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .filter-bar input,.filter-bar select{border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;background:#fafaf8;outline:none}
+    .btn-filter{background:var(--brown);color:#fff;border:none;border-radius:10px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+    .absensi-row{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;transition:all .15s}
+    .absensi-row:hover{border-color:var(--amber);box-shadow:0 2px 8px #92400e22}
+    .absensi-row.telat{border-left:4px solid var(--red);background:#fef2f2}
+    .absensi-row.tepat{border-left:4px solid var(--green);background:#f0fdf4}
+    .absensi-row.warning{border-left:4px solid var(--orange);background:#fffbeb}
+    .badge{display:inline-block;font-size:10px;font-weight:600;padding:3px 8px;border-radius:99px}
+    .badge-tepat{background:#d1fae5;color:#065f46}
+    .badge-telat{background:#fef2f2;color:#991b1b}
+    .badge-warning{background:#fef3c7;color:#92400e}
+    .selfie-thumb{width:50px;height:50px;border-radius:8px;object-fit:cover;border:2px solid var(--border)}
+    .empty-state{text-align:center;padding:32px;color:var(--muted);font-size:13px}
+    /* Modal detail */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:16px}
+    .modal-overlay.show{display:flex}
+    .modal{background:var(--card);border-radius:20px;padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+    .selfie-full{width:100%;border-radius:12px;object-fit:cover;margin-bottom:12px}
+    .info-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+    .info-row:last-child{border-bottom:none}
+    @media(max-width:600px){main{padding:10px}}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo">☕</div>
+    <span class="app-name">Kopi Telu Report</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="user-badge" id="user-badge">-</span>
+    <a href="dashboard.html" class="btn-link">← Dashboard</a>
+    <button class="btn-link" onclick="doLogout()">Keluar →</button>
+  </div>
+</header>
+
+<main>
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+    <div>
+      <div style="font-family:'DM Serif Display',serif;font-size:22px">📍 Rekap Absensi GPS</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">Check-in & check-out dengan foto dan lokasi</div>
+    </div>
+    <a href="setting-absensi.html" style="background:var(--light);border:1.5px solid var(--border);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:600;color:var(--brown);text-decoration:none">⚙️ Setting Jam</a>
+  </div>
+
+  <!-- Filter -->
+  <div class="card" style="padding:12px 16px">
+    <div class="filter-bar">
+      <input type="date" id="f-tanggal"/>
+      <select id="f-outlet">
+        <option value="all">Semua Outlet</option>
+      </select>
+      <select id="f-status">
+        <option value="all">Semua Status</option>
+        <option value="tepat">✅ Tepat Waktu</option>
+        <option value="telat">🚨 Terlambat</option>
+        <option value="warning">⚠️ Di Luar Lokasi</option>
+      </select>
+      <button class="btn-filter" onclick="loadAbsensi()">🔍 Tampilkan</button>
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px" id="summary-grid" style="display:none">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;border-left:4px solid var(--green)">
+      <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase">Tepat Waktu</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:24px;color:var(--green)" id="s-tepat">-</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;border-left:4px solid var(--red)">
+      <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase">Terlambat</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:24px;color:var(--red)" id="s-telat">-</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;border-left:4px solid var(--orange)">
+      <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase">Di Luar Lokasi</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:24px;color:var(--orange)" id="s-warning">-</div>
+    </div>
+  </div>
+
+  <div id="absensi-list"><div class="empty-state">Pilih tanggal dan klik Tampilkan</div></div>
+</main>
+
+<!-- Modal Detail -->
+<div class="modal-overlay" id="modal-detail" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div style="font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:16px" id="modal-title">Detail Absensi</div>
+    <div id="modal-content"></div>
+    <button onclick="closeModal()" style="width:100%;background:var(--light);border:1.5px solid var(--border);border-radius:10px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--muted);margin-top:12px">Tutup</button>
+  </div>
+</div>
+
+<script type="module">
+  import { Auth, OutletManager } from './js/auth.js';
+  import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+  import { getFirestore, collection, getDocs, query, where, orderBy } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+
+  const user = Auth.requireAuth('owner');
+  if (!user) throw new Error();
+  document.getElementById('user-badge').textContent = user.nama;
+  window.doLogout = () => Auth.logout();
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAx4RfDW-UdkFf3m_wQuSdeptqssE7n2wU",
+    authDomain: "cafe-shift-report-70c6c.firebaseapp.com",
+    projectId: "cafe-shift-report-70c6c",
+    storageBucket: "cafe-shift-report-70c6c.firebasestorage.app",
+    messagingSenderId: "461174765046",
+    appId: "1:461174765046:web:660d43de856294644343d7"
+  };
+  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Set default tanggal hari ini WIB
+  const todayWIB = new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Jakarta'})).toISOString().split('T')[0];
+  document.getElementById('f-tanggal').value = todayWIB;
+
+  let outletMap = {};
+  const outlets = await OutletManager.getAll();
+  outlets.forEach(o => {
+    outletMap[o.id] = o.nama;
+    const opt = document.createElement('option');
+    opt.value = o.id; opt.textContent = o.nama;
+    document.getElementById('f-outlet').appendChild(opt);
+  });
+
+  let allData = [];
+
+  window.loadAbsensi = async function() {
+    const tanggal = document.getElementById('f-tanggal').value;
+    const outlet  = document.getElementById('f-outlet').value;
+    const status  = document.getElementById('f-status').value;
+    const list    = document.getElementById('absensi-list');
+    list.innerHTML = '<div class="empty-state">⏳ Memuat...</div>';
+
+    try {
+      let constraints = [where("tanggal", "==", tanggal), orderBy("checkIn")];
+      if (outlet !== 'all') constraints.push(where("outlet", "==", outlet));
+      const snap = await getDocs(query(collection(db, "absensi_gps"), ...constraints));
+      allData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // Filter status
+      let filtered = allData;
+      if (status === 'tepat')   filtered = allData.filter(a => !a.isTelat && a.gps?.sesuaiOutlet);
+      if (status === 'telat')   filtered = allData.filter(a => a.isTelat);
+      if (status === 'warning') filtered = allData.filter(a => !a.gps?.sesuaiOutlet);
+
+      // Summary
+      document.getElementById('summary-grid').style.display = 'grid';
+      document.getElementById('s-tepat').textContent   = allData.filter(a => !a.isTelat && a.gps?.sesuaiOutlet).length;
+      document.getElementById('s-telat').textContent   = allData.filter(a => a.isTelat).length;
+      document.getElementById('s-warning').textContent = allData.filter(a => !a.gps?.sesuaiOutlet).length;
+
+      if (!filtered.length) { list.innerHTML = '<div class="empty-state">Tidak ada data absensi</div>'; return; }
+
+      list.innerHTML = filtered.map(a => {
+        const isLuar = !a.gps?.sesuaiOutlet;
+        const rowClass = a.isTelat ? 'telat' : isLuar ? 'warning' : 'tepat';
+        const badgeClass = a.isTelat ? 'badge-telat' : isLuar ? 'badge-warning' : 'badge-tepat';
+        const badgeText = a.isTelat ? `⏰ ${a.statusCheckin}` : isLuar ? '⚠️ Di Luar Lokasi' : '✅ Tepat Waktu';
+        return `<div class="absensi-row ${rowClass}" onclick="showDetail('${a.id}')">
+          <div style="display:flex;align-items:center;gap:12px">
+            ${a.selfie ? `<img src="${a.selfie}" class="selfie-thumb"/>` : '<div class="selfie-thumb" style="background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:18px">👤</div>'}
+            <div style="flex:1">
+              <div style="font-size:14px;font-weight:600">${a.userNama}</div>
+              <div style="font-size:11px;color:var(--muted)">${outletMap[a.outlet]||a.outlet} · Shift ${a.shift}</div>
+              <div style="font-size:12px;margin-top:4px">
+                🟢 In: ${a.checkInTime||'-'}
+                ${a.checkOutTime ? ` · 🔴 Out: ${a.checkOutTime}` : ' · ⏳ Belum checkout'}
+              </div>
+              <div style="margin-top:4px"><span class="badge ${badgeClass}">${badgeText}</span>
+              ${isLuar ? `<span class="badge badge-warning" style="margin-left:4px">📍 ${a.gps?.jarak}m dari outlet</span>` : ''}
+              </div>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    } catch(e) { list.innerHTML = `<div class="empty-state">Error: ${e.message}</div>`; }
+  };
+
+  window.showDetail = function(id) {
+    const a = allData.find(x => x.id === id);
+    if (!a) return;
+    document.getElementById('modal-title').textContent = `${a.userNama} — ${a.tanggal}`;
+    const mapsUrl = a.gps ? `https://maps.google.com/?q=${a.gps.lat},${a.gps.lng}` : '#';
+    document.getElementById('modal-content').innerHTML = `
+      ${a.selfie ? `<img src="${a.selfie}" class="selfie-full"/>` : ''}
+      <div class="info-row"><span style="color:var(--muted)">Nama</span><strong>${a.userNama}</strong></div>
+      <div class="info-row"><span style="color:var(--muted)">Outlet</span><strong>${outletMap[a.outlet]||a.outlet}</strong></div>
+      <div class="info-row"><span style="color:var(--muted)">Shift</span><strong>${a.shift}</strong></div>
+      <div class="info-row"><span style="color:var(--muted)">Check-in</span><strong>${a.checkInTime||'-'}</strong></div>
+      <div class="info-row"><span style="color:var(--muted)">Status</span><strong style="color:${a.isTelat?'var(--red)':'var(--green)'}">${a.statusCheckin}</strong></div>
+      <div class="info-row"><span style="color:var(--muted)">Jarak dari outlet</span><strong>${a.gps?.jarak}m ${a.gps?.sesuaiOutlet?'✅':'⚠️'}</strong></div>
+      <div class="info-row"><span style="color:var(--muted)">Lokasi GPS</span><a href="${mapsUrl}" target="_blank" style="color:var(--blue)">Buka di Maps 🗺️</a></div>
+      <div class="info-row"><span style="color:var(--muted)">Check-out</span><strong>${a.checkOutTime||'Belum checkout'}</strong></div>
+      ${a.selfieCheckout ? `<div style="margin-top:12px"><div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px">FOTO CHECK-OUT</div><img src="${a.selfieCheckout}" class="selfie-full"/></div>` : ''}
+      ${a.gpsCheckout ? `<div class="info-row"><span style="color:var(--muted)">Lokasi Checkout</span><a href="https://maps.google.com/?q=${a.gpsCheckout.lat},${a.gpsCheckout.lng}" target="_blank" style="color:var(--blue)">Buka di Maps 🗺️</a></div>` : ''}
+    `;
+    document.getElementById('modal-detail').classList.add('show');
+  };
+
+  window.closeModal = () => document.getElementById('modal-detail').classList.remove('show');
+
+  // Auto load hari ini
+  loadAbsensi();
+</script>
+</body>
+</html>
