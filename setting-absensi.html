@@ -392,11 +392,9 @@
   ];
 
   // ── CEK AUTH ───────────────────────────────────────────
-  const user = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
-  if (!user || user.role !== 'owner') {
-    alert('Akses ditolak. Hanya owner yang bisa mengatur setting absensi.');
-    window.location.href = 'index.html';
-  }
+  const user = JSON.parse(localStorage.getItem('cafe_session') || 'null');
+  if (!user) { window.location.href = 'index.html'; }
+  if (user && user.role !== 'owner') { window.location.href = 'home.html'; }
   document.getElementById('navRole').textContent =
     user ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : 'Owner';
 
@@ -570,7 +568,7 @@
 
   // ── KELUAR ─────────────────────────────────────────────
   window.keluar = function() {
-    sessionStorage.clear();
+    localStorage.removeItem('cafe_session');
     window.location.href = 'index.html';
   };
 
