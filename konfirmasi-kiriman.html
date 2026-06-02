@@ -66,13 +66,11 @@
     <div style="font-size:12px;color:var(--muted);margin-top:2px" id="outlet-info">-</div>
   </div>
 
-  <!-- Kiriman pending -->
   <div>
     <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">⏳ Belum Dikonfirmasi</div>
     <div id="pending-list"><div class="empty-state">Memuat...</div></div>
   </div>
 
-  <!-- Kiriman sudah dikonfirmasi -->
   <div>
     <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">✅ Sudah Dikonfirmasi (7 hari terakhir)</div>
     <div id="confirmed-list"><div class="empty-state">Memuat...</div></div>
@@ -101,12 +99,13 @@
   const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
+  // ── TELEGRAM CONFIG ───────────────────────────────────────
   const TELEGRAM_TOKEN = '8613637829:AAERHEyn8KfJRcJIDra-w3h-kgYcS29WhMQ';
-  const TELEGRAM_CHAT  = '7202941698';
+  const TELEGRAM_CHAT  = '-1004291425176';
+  const TELEGRAM_TOPIC = 7; // 📦 Gudang
 
   const outletMap = await OutletManager.getNamesMap();
   const myOutlets = user.outlets || (user.outlet ? [user.outlet] : []);
-  // Filter berdasarkan outlet yang dipilih saat login
   const selectedOutlet = user.selectedOutlet;
   const filterOutlets = selectedOutlet ? [selectedOutlet] : myOutlets;
   const outletNamaDisplay = selectedOutlet ? (outletMap[selectedOutlet] || selectedOutlet) : myOutlets.map(o => outletMap[o]||o).join(', ');
@@ -117,7 +116,6 @@
     const confirmedList = document.getElementById('confirmed-list');
 
     try {
-      // Ambil semua pengiriman untuk outlet pegawai
       const allSnap = await getDocs(query(
         collection(db, "pengiriman"),
         orderBy("createdAt", "desc")
@@ -129,14 +127,12 @@
       const pending   = allPengiriman.filter(p => p.status === 'pending');
       const confirmed = allPengiriman.filter(p => p.status !== 'pending').slice(0, 10);
 
-      // Render pending
       if (!pending.length) {
         pendingList.innerHTML = '<div class="empty-state">🎉 Tidak ada kiriman yang perlu dikonfirmasi</div>';
       } else {
         pendingList.innerHTML = pending.map(p => renderPendingCard(p)).join('');
       }
 
-      // Render confirmed
       if (!confirmed.length) {
         confirmedList.innerHTML = '<div class="empty-state">Belum ada riwayat konfirmasi</div>';
       } else {
@@ -184,10 +180,8 @@
         </div>
         <div style="font-size:12px;font-weight:600;color:var(--amber)">⏳ Menunggu</div>
       </div>
-
       <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px">Periksa dan isi jumlah yang diterima:</div>
       ${itemInputs}
-
       <div class="konfirmasi-section">
         <div class="form-group">
           <label>Catatan (opsional — isi jika ada yang kurang/rusak)</label>
@@ -209,82 +203,64 @@
       const waktuWIB = now.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour12: false });
       const catatan = document.getElementById(`catatan-${pengirimanId}`).value.trim();
 
-      // Ambil jumlah diterima per item
       const updatedItems = items.map((item, idx) => {
         const inputEl = document.getElementById(`item-${pengirimanId}-${idx}`);
         const diterima = parseFloat(inputEl?.value) || 0;
         return { ...item, jumlahDiterima: diterima };
       });
 
-      // Cek apakah ada selisih
       const adaSelisih = updatedItems.some(i => i.jumlahDiterima !== i.jumlah);
       const status = adaSelisih ? 'partial' : 'confirmed';
 
       await updateDoc(doc(db, "pengiriman", pengirimanId), {
-        items: updatedItems,
-        status,
+        items: updatedItems, status,
         confirmedBy: user.nama,
         confirmedAt: now.toISOString(),
         confirmedAtWIB: waktuWIB,
         catatanKonfirmasi: catatan
       });
 
-      // Update stok outlet — tambah sesuai jumlah yang diterima
+      // Update stok outlet
       const myOutlet = filterOutlets[0];
       for (const item of updatedItems) {
         if (!item.jumlahDiterima || item.jumlahDiterima <= 0) continue;
-        // Cek apakah sudah ada stok outlet untuk item ini
         const stokSnap = await getDocs(query(
           collection(db, "stok_outlet"),
           where("outlet", "==", myOutlet),
           where("itemId", "==", item.itemId)
         ));
         if (stokSnap.empty) {
-          // Buat baru
           await addDoc(collection(db, "stok_outlet"), {
-            outlet: myOutlet,
-            outletNama: outletMap[myOutlet] || myOutlet,
-            itemId: item.itemId,
-            itemNama: item.itemNama,
-            satuan: item.satuan,
-            stok: item.jumlahDiterima,
-            updatedAt: now.toISOString()
+            outlet: myOutlet, outletNama: outletMap[myOutlet] || myOutlet,
+            itemId: item.itemId, itemNama: item.itemNama, satuan: item.satuan,
+            stok: item.jumlahDiterima, updatedAt: now.toISOString()
           });
         } else {
-          // Update existing
           const existing = stokSnap.docs[0];
-          const stokLama = existing.data().stok || 0;
           await updateDoc(doc(db, "stok_outlet", existing.id), {
-            stok: stokLama + item.jumlahDiterima,
+            stok: (existing.data().stok || 0) + item.jumlahDiterima,
             updatedAt: now.toISOString()
           });
         }
-        // Log
         await addDoc(collection(db, "stok_outlet_log"), {
-          type: 'masuk_kiriman',
-          outlet: myOutlet,
+          type: 'masuk_kiriman', outlet: myOutlet,
           outletNama: outletMap[myOutlet] || myOutlet,
-          itemId: item.itemId,
-          itemNama: item.itemNama,
-          satuan: item.satuan,
-          jumlah: item.jumlahDiterima,
-          pengirimanId,
-          inputBy: user.nama,
-          createdAt: now.toISOString(),
-          createdAtWIB: waktuWIB
+          itemId: item.itemId, itemNama: item.itemNama, satuan: item.satuan,
+          jumlah: item.jumlahDiterima, pengirimanId,
+          inputBy: user.nama, createdAt: now.toISOString(), createdAtWIB: waktuWIB
         });
       }
 
-      // Notif Telegram ke owner
+      // Notif Telegram → topik Gudang (7)
       try {
-        const outletNama = outletMap[items[0]?.outlet] || user.selectedOutlet || '-';
+        const namaOutlet = outletMap[myOutlet] || myOutlet;
         const itemDetail = updatedItems.map(i => {
           const selisih = i.jumlahDiterima - i.jumlah;
           return `  ${selisih === 0 ? '✅' : '⚠️'} ${i.itemNama}: ${i.jumlahDiterima}/${i.jumlah} ${i.satuan}${selisih !== 0 ? ` (selisih ${selisih > 0 ? '+' : ''}${selisih})` : ''}`;
         }).join('\n');
 
         const pesan = `${status === 'confirmed' ? '✅' : '⚠️'} *KONFIRMASI KIRIMAN*\n\n` +
-          `🏪 Outlet: *${user.selectedOutlet ? outletMap[user.selectedOutlet] : myOutletNames}*\n` +
+          `🏪 Outlet: *${namaOutlet}*\n` +
           `🕐 ${waktuWIB}\n\n` +
           `📦 *Detail:*\n${itemDetail}` +
           `${catatan ? `\n\n📝 ${catatan}` : ''}\n\n` +
@@ -292,7 +268,7 @@
 
         await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: TELEGRAM_CHAT, text: pesan, parse_mode: 'Markdown' })
+          body: JSON.stringify({ chat_id: TELEGRAM_CHAT, message_thread_id: TELEGRAM_TOPIC, text: pesan, parse_mode: 'Markdown' })
         });
       } catch(e) { console.warn('Telegram gagal:', e); }
 
