@@ -396,7 +396,8 @@
   const db = getFirestore(app);
 
   const TELEGRAM_TOKEN = '8613637829:AAERHEyn8KfJRcJIDra-w3h-kgYcS29WhMQ';
-  const TELEGRAM_CHAT  = '7202941698';
+  const TELEGRAM_CHAT  = '-1004291425176';
+  const TELEGRAM_TOPIC = 7;
 
   const KATEGORI_ICON = { bahan:'🫘', kemasan:'📦', operasional:'🔧', lainnya:'📋' };
 
@@ -1191,7 +1192,7 @@
         const pesan = `🚚 *PENGIRIMAN BARANG*\n\n🏪 Tujuan: *${outletNama}*\n📅 ${tanggal.split('-').reverse().join('/')}\n\n📦 *Item Dikirim:*\n${itemList}${catatan?'\n\n📝 '+catatan:''}\n\n_Dikirim oleh: ${user.nama}_\n⏳ Menunggu konfirmasi outlet`;
         await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: TELEGRAM_CHAT, text: pesan, parse_mode: 'Markdown' })
+          body: JSON.stringify({ chat_id: TELEGRAM_CHAT, message_thread_id: TELEGRAM_TOPIC, text: pesan, parse_mode: 'Markdown' })
         });
       } catch(e) { console.warn('Telegram gagal:', e); }
 
