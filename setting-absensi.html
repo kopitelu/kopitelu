@@ -1,148 +1,582 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Setting Absensi — Kopi Telu</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
   <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{--brown:#92400e;--amber:#b45309;--light:#fffbf5;--card:#fff;--border:#e5d8c8;--text:#1c1410;--muted:#7a6652;--green:#059669;--red:#dc2626}
-    body{font-family:'DM Sans',sans-serif;background:var(--light);color:var(--text);min-height:100vh}
-    header{background:var(--brown);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px #92400e44}
-    .header-left{display:flex;align-items:center;gap:10px}
-    .logo{width:32px;height:32px;background:#78350f;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
-    .app-name{font-family:'DM Serif Display',serif;font-size:17px}
-    .btn-link{color:#fcd34d;font-size:13px;cursor:pointer;background:none;border:none;text-decoration:none}
-    .user-badge{background:#78350f;padding:3px 10px;border-radius:99px;font-size:12px;color:#fff}
-    main{max-width:700px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:40px}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px}
-    .card-title{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
-    .form-group{margin-bottom:12px}
-    .form-group label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}
-    .form-group input,.form-group select{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;background:#fafaf8;outline:none}
-    .form-group input:focus{border-color:var(--amber)}
-    .btn-full{width:100%;padding:12px;font-size:14px;font-weight:700;border:none;border-radius:12px;cursor:pointer;font-family:'DM Sans',sans-serif;background:var(--brown);color:#fff;margin-top:4px}
-    .btn-full:hover{background:var(--amber)}
-    .outlet-card{background:var(--light);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
-    .outlet-card-title{font-size:14px;font-weight:600;margin-bottom:10px}
-    .time-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .msg-success{background:#f0fdf4;border:1px solid #6ee7b7;border-radius:8px;padding:8px 12px;font-size:12px;color:var(--green);margin-bottom:10px;display:none}
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brown:       #7B3F00;
+      --brown-dark:  #5C2D00;
+      --brown-light: #A0522D;
+      --cream:       #FDF6EE;
+      --cream-dark:  #F0E6D3;
+      --text:        #2C1A0E;
+      --text-muted:  #7A5C44;
+      --border:      #D9C4AA;
+      --red:         #C0392B;
+      --green:       #27AE60;
+      --shadow:      rgba(123,63,0,0.10);
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── NAVBAR ── */
+    nav {
+      background: var(--brown);
+      color: #fff;
+      padding: 0 20px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
+    .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.05rem; }
+    .nav-brand span { font-size: 1.4rem; }
+    .nav-links { display: flex; align-items: center; gap: 14px; font-size: 0.88rem; }
+    .nav-links a { color: #ffe8cc; text-decoration: none; }
+    .nav-links a:hover { color: #fff; }
+    .nav-role {
+      background: rgba(255,255,255,0.18);
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .btn-keluar {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #fff;
+      padding: 4px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.82rem;
+    }
+    .btn-keluar:hover { background: rgba(255,255,255,0.25); }
+
+    /* ── MAIN ── */
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 28px 16px 60px;
+    }
+
+    .page-header { margin-bottom: 28px; }
+    .page-header h1 { font-size: 1.45rem; display: flex; align-items: center; gap: 8px; }
+    .page-header p  { color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
+
+    /* ── CARD ── */
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px var(--shadow);
+    }
+    .card-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--brown);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .card-sub {
+      font-size: 0.83rem;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+
+    /* ── OUTLET TETAP (single jam) ── */
+    .tetap-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 500px) { .tetap-grid { grid-template-columns: 1fr; } }
+
+    .outlet-box {
+      background: var(--cream);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .outlet-box label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--brown-dark);
+      margin-bottom: 10px;
+    }
+
+    .shift-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .shift-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      width: 50px;
+      flex-shrink: 0;
+    }
+    .shift-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      width: 52px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .badge-pagi  { background: #FFF3CD; color: #856404; }
+    .badge-sore  { background: #CCE5FF; color: #004085; }
+    .badge-malam { background: #E2D9F3; color: #4A235A; }
+
+    input[type="time"] {
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 6px 10px;
+      font-size: 0.9rem;
+      color: var(--text);
+      background: #fff;
+      width: 110px;
+      cursor: pointer;
+    }
+    input[type="time"]:focus {
+      outline: none;
+      border-color: var(--brown-light);
+      box-shadow: 0 0 0 3px rgba(123,63,0,0.10);
+    }
+
+    /* ── OUTLET POOL (per hari+shift) ── */
+    .pool-outlet { margin-bottom: 24px; }
+    .pool-outlet:last-child { margin-bottom: 0; }
+
+    .pool-outlet-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--brown-dark);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .day-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.83rem;
+    }
+    .day-table th {
+      background: var(--cream-dark);
+      color: var(--text-muted);
+      font-weight: 600;
+      text-align: left;
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .day-table th:first-child { border-radius: 8px 0 0 0; }
+    .day-table th:last-child  { border-radius: 0 8px 0 0; }
+
+    .day-table td {
+      padding: 6px 10px;
+      border-bottom: 1px solid #F0E6D3;
+      vertical-align: middle;
+    }
+    .day-table tr:last-child td { border-bottom: none; }
+    .day-table tr:hover td { background: #FEFAF5; }
+
+    .day-name {
+      font-weight: 600;
+      color: var(--text);
+      width: 90px;
+    }
+    .day-name.weekend { color: var(--brown); }
+
+    .time-cell {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .time-cell input[type="time"] { width: 100px; }
+
+    /* toggle libur */
+    .libur-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .libur-toggle input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      accent-color: var(--brown);
+      cursor: pointer;
+    }
+
+    .row-libur td { opacity: 0.45; }
+    .row-libur .libur-toggle { opacity: 1; }
+
+    /* ── DIVIDER antar outlet pool ── */
+    .pool-divider {
+      border: none;
+      border-top: 1px dashed var(--border);
+      margin: 20px 0;
+    }
+
+    /* ── INFO BOX ── */
+    .info-box {
+      background: #FFF8F0;
+      border: 1px solid #F5CBA7;
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+    .info-box strong { color: var(--text); }
+
+    /* ── SAVE BUTTON ── */
+    .btn-save {
+      display: block;
+      width: 100%;
+      background: var(--brown);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .2s, transform .1s;
+      margin-top: 8px;
+    }
+    .btn-save:hover   { background: var(--brown-dark); }
+    .btn-save:active  { transform: scale(.98); }
+    .btn-save:disabled { background: #C4A882; cursor: not-allowed; }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #2C1A0E;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: transform .3s ease;
+      z-index: 999;
+      pointer-events: none;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── LOADING ── */
+    .loading-text {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 20px 0;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
-<header>
-  <div class="header-left">
-    <div class="logo">☕</div>
-    <span class="app-name">Kopi Telu Report</span>
+
+<!-- NAVBAR -->
+<nav>
+  <div class="nav-brand">
+    <span>☕</span> Kopi Telu Report
   </div>
-  <div style="display:flex;align-items:center;gap:10px">
-    <span class="user-badge" id="user-badge">-</span>
-    <a href="dashboard.html" class="btn-link">← Dashboard</a>
-    <button class="btn-link" onclick="doLogout()">Keluar →</button>
+  <div class="nav-links">
+    <span class="nav-role" id="navRole">Owner</span>
+    <a href="dashboard.html">← Dashboard</a>
+    <button class="btn-keluar" onclick="keluar()">Keluar →</button>
   </div>
-</header>
+</nav>
 
 <main>
-  <div>
-    <div style="font-family:'DM Serif Display',serif;font-size:22px">⚙️ Setting Absensi</div>
-    <div style="font-size:12px;color:var(--muted);margin-top:2px">Atur jam batas masuk per shift per outlet</div>
+  <div class="page-header">
+    <h1>⚙️ Setting Absensi</h1>
+    <p>Atur jam batas masuk per shift per outlet. Pegawai yang check-in setelah jam ini dihitung terlambat.</p>
   </div>
 
-  <div class="msg-success" id="msg-success">✅ Setting berhasil disimpan!</div>
-
+  <!-- OUTLET TETAP -->
   <div class="card">
-    <div class="card-title">⏰ Jam Batas Masuk per Outlet</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">
-      Pegawai yang check-in setelah jam ini akan dihitung terlambat.
-    </div>
-    <div id="outlet-settings"><div style="text-align:center;padding:20px;color:var(--muted)">Memuat...</div></div>
-    <button class="btn-full" onclick="saveSettings()">💾 Simpan Setting</button>
-  </div>
+    <div class="card-title">📍 Outlet Tetap</div>
+    <div class="card-sub">Jam batas masuk berlaku sama setiap hari</div>
 
-  <div class="card">
-    <div class="card-title">📍 Info Radius Toleransi</div>
-    <div style="font-size:13px;color:var(--muted)">
-      Radius toleransi GPS: <strong>100 meter</strong> dari koordinat outlet.<br/>
-      Pegawai yang check-in di luar radius akan mendapat warning tapi tetap bisa absen.
+    <div class="tetap-grid" id="tetapGrid">
+      <div class="loading-text">Memuat...</div>
     </div>
   </div>
+
+  <!-- OUTLET POOL -->
+  <div class="card">
+    <div class="card-title">🔄 Outlet Pool</div>
+    <div class="card-sub">Jam batas masuk bisa berbeda per hari dan per shift</div>
+
+    <div id="poolGrid">
+      <div class="loading-text">Memuat...</div>
+    </div>
+  </div>
+
+  <!-- INFO -->
+  <div class="info-box" style="margin-bottom:20px;">
+    <strong>📌 Info Radius Toleransi GPS</strong><br>
+    Radius toleransi: <strong>100 meter</strong> dari koordinat outlet.<br>
+    Pegawai yang check-in di luar radius akan mendapat warning tapi tetap bisa absen.<br>
+    <strong>Centang "Libur"</strong> jika outlet pool tidak beroperasi pada hari tertentu.
+  </div>
+
+  <button class="btn-save" id="btnSave" onclick="simpanSetting()">💾 Simpan Setting</button>
 </main>
 
-<script type="module">
-  import { Auth, OutletManager } from './js/auth.js';
-  import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
-  import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, query, where } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+<div id="toast"></div>
 
-  const user = Auth.requireAuth('owner');
-  if (!user) throw new Error();
-  document.getElementById('user-badge').textContent = user.nama;
-  window.doLogout = () => Auth.logout();
+<!-- FIREBASE -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import {
+    getFirestore, doc, getDoc, setDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
-    apiKey: "AIzaSyAx4RfDW-UdkFf3m_wQuSdeptqssE7n2wU",
-    authDomain: "cafe-shift-report-70c6c.firebaseapp.com",
-    projectId: "cafe-shift-report-70c6c",
-    storageBucket: "cafe-shift-report-70c6c.firebasestorage.app",
+    apiKey:            "AIzaSyAx4RfDW-UdkFf3m_wQuSdeptqssE7n2wU",
+    authDomain:        "cafe-shift-report-70c6c.firebaseapp.com",
+    projectId:         "cafe-shift-report-70c6c",
+    storageBucket:     "cafe-shift-report-70c6c.firebasestorage.app",
     messagingSenderId: "461174765046",
-    appId: "1:461174765046:web:660d43de856294644343d7"
+    appId:             "1:461174765046:web:660d43de856294644343d7"
   };
-  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-  const db = getFirestore(app);
 
-  let allOutlets = [];
-  let existingSettings = {};
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
 
-  async function init() {
-    allOutlets = await OutletManager.getAll();
-    // Load existing settings
-    const snap = await getDocs(collection(db, "setting_absensi"));
-    snap.docs.forEach(d => { existingSettings[d.data().outlet] = { id: d.id, ...d.data() }; });
-    renderSettings();
+  // ── KONSTANTA ──────────────────────────────────────────
+  const HARI   = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
+  const SHIFTS = ['Pagi','Sore'];
+
+  // outlet tetap: jam sama tiap hari, tapi per shift
+  const OUTLET_TETAP = [
+    { id: 'outlet3', nama: 'Kopi Telu Citraland' },
+    { id: 'outlet5', nama: 'Tanara Tunjungan Plaza' },
+  ];
+
+  // outlet pool: per hari + per shift
+  const OUTLET_POOL = [
+    { id: 'outlet1', nama: '🏊 Kopi Telu Sawah View' },
+    { id: 'outlet2', nama: '🏊 Kopi Telu Awang Awang' },
+    { id: 'outlet4', nama: '🍦 Bar Eskrim' },
+  ];
+
+  // ── CEK AUTH ───────────────────────────────────────────
+  const user = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+  if (!user || user.role !== 'owner') {
+    alert('Akses ditolak. Hanya owner yang bisa mengatur setting absensi.');
+    window.location.href = 'index.html';
   }
-  init();
+  document.getElementById('navRole').textContent =
+    user ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : 'Owner';
 
-  function renderSettings() {
-    const container = document.getElementById('outlet-settings');
-    container.innerHTML = allOutlets.map(o => {
-      const s = existingSettings[o.id] || {};
-      return `<div class="outlet-card">
-        <div class="outlet-card-title">🏪 ${o.nama}</div>
-        <div class="time-grid">
-          <div class="form-group" style="margin-bottom:0">
-            <label>Batas Jam Masuk — Shift Pagi</label>
-            <input type="time" id="pagi-${o.id}" value="${s.batasPagi || '08:00'}"/>
-          </div>
-          <div class="form-group" style="margin-bottom:0">
-            <label>Batas Jam Masuk — Shift Sore</label>
-            <input type="time" id="sore-${o.id}" value="${s.batasSore || '14:00'}"/>
-          </div>
-        </div>
-      </div>`;
-    }).join('');
-  }
+  // ── LOAD SETTING ───────────────────────────────────────
+  let savedData = {};
 
-  window.saveSettings = async function() {
-    const btn = document.querySelector('.btn-full');
-    btn.disabled = true; btn.textContent = '⏳ Menyimpan...';
+  async function loadSetting() {
     try {
-      for (const o of allOutlets) {
-        const batasPagi = document.getElementById(`pagi-${o.id}`).value;
-        const batasSore = document.getElementById(`sore-${o.id}`).value;
-        const data = { outlet: o.id, outletNama: o.nama, batasPagi, batasSore, updatedAt: new Date().toISOString() };
-        if (existingSettings[o.id]) {
-          await updateDoc(doc(db, "setting_absensi", existingSettings[o.id].id), data);
-        } else {
-          const ref = await addDoc(collection(db, "setting_absensi"), data);
-          existingSettings[o.id] = { id: ref.id, ...data };
-        }
+      const snap = await getDoc(doc(db, 'setting_absensi', 'jam_masuk'));
+      if (snap.exists()) savedData = snap.data();
+    } catch(e) {
+      console.error('Load error:', e);
+    }
+    renderTetap();
+    renderPool();
+  }
+
+  // ── RENDER OUTLET TETAP ────────────────────────────────
+  function renderTetap() {
+    const grid = document.getElementById('tetapGrid');
+    grid.innerHTML = '';
+
+    OUTLET_TETAP.forEach(outlet => {
+      const box = document.createElement('div');
+      box.className = 'outlet-box';
+
+      let html = `<label>📍 ${outlet.nama}</label>`;
+      SHIFTS.forEach(shift => {
+        const key   = `${outlet.id}_${shift.toLowerCase()}`;
+        const saved = savedData[key] || '';
+        const badgeClass = shift === 'Pagi' ? 'badge-pagi' : 'badge-sore';
+        html += `
+          <div class="shift-row">
+            <span class="shift-badge ${badgeClass}">${shift}</span>
+            <input type="time" id="${key}" value="${saved}" />
+          </div>`;
+      });
+
+      box.innerHTML = html;
+      grid.appendChild(box);
+    });
+  }
+
+  // ── RENDER OUTLET POOL ─────────────────────────────────
+  function renderPool() {
+    const container = document.getElementById('poolGrid');
+    container.innerHTML = '';
+
+    OUTLET_POOL.forEach((outlet, idx) => {
+      if (idx > 0) {
+        const hr = document.createElement('hr');
+        hr.className = 'pool-divider';
+        container.appendChild(hr);
       }
-      document.getElementById('msg-success').style.display = 'block';
-      setTimeout(() => document.getElementById('msg-success').style.display = 'none', 3000);
-    } catch(e) { alert('Error: ' + e.message); }
-    finally { btn.disabled = false; btn.textContent = '💾 Simpan Setting'; }
+
+      const div = document.createElement('div');
+      div.className = 'pool-outlet';
+
+      let html = `<div class="pool-outlet-name">${outlet.nama}</div>`;
+      html += `
+        <table class="day-table">
+          <thead>
+            <tr>
+              <th>Hari</th>
+              ${SHIFTS.map(s => `<th>${s}</th>`).join('')}
+              <th>Libur</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+      HARI.forEach((hari, hIdx) => {
+        const isWeekend = hIdx >= 5;
+        const liberKey  = `${outlet.id}_${hari.toLowerCase()}_libur`;
+        const isLibur   = savedData[liberKey] === true;
+
+        html += `<tr id="row_${outlet.id}_${hIdx}" class="${isLibur ? 'row-libur' : ''}">`;
+        html += `<td class="day-name${isWeekend ? ' weekend' : ''}">${hari}</td>`;
+
+        SHIFTS.forEach(shift => {
+          const key   = `${outlet.id}_${hari.toLowerCase()}_${shift.toLowerCase()}`;
+          const saved = savedData[key] || '';
+          const badgeClass = shift === 'Pagi' ? 'badge-pagi' : 'badge-sore';
+          html += `
+            <td>
+              <div class="time-cell">
+                <span class="shift-badge ${badgeClass}" style="display:none">${shift}</span>
+                <input type="time" id="${key}" value="${saved}" ${isLibur ? 'disabled' : ''} />
+              </div>
+            </td>`;
+        });
+
+        html += `
+            <td>
+              <label class="libur-toggle">
+                <input type="checkbox" id="${liberKey}"
+                  onchange="toggleLibur('${outlet.id}', ${hIdx}, this.checked)"
+                  ${isLibur ? 'checked' : ''} />
+                Libur
+              </label>
+            </td>
+          </tr>`;
+      });
+
+      html += `</tbody></table>`;
+      div.innerHTML = html;
+      container.appendChild(div);
+    });
+  }
+
+  // ── TOGGLE LIBUR ───────────────────────────────────────
+  window.toggleLibur = function(outletId, hIdx, isLibur) {
+    const row = document.getElementById(`row_${outletId}_${hIdx}`);
+    if (!row) return;
+    row.classList.toggle('row-libur', isLibur);
+    row.querySelectorAll('input[type="time"]').forEach(inp => {
+      inp.disabled = isLibur;
+    });
   };
+
+  // ── SIMPAN ─────────────────────────────────────────────
+  window.simpanSetting = async function() {
+    const btn = document.getElementById('btnSave');
+    btn.disabled = true;
+    btn.textContent = '⏳ Menyimpan...';
+
+    const data = {};
+
+    // tetap
+    OUTLET_TETAP.forEach(outlet => {
+      SHIFTS.forEach(shift => {
+        const key = `${outlet.id}_${shift.toLowerCase()}`;
+        const el  = document.getElementById(key);
+        if (el) data[key] = el.value;
+      });
+    });
+
+    // pool
+    OUTLET_POOL.forEach(outlet => {
+      HARI.forEach(hari => {
+        const liberKey = `${outlet.id}_${hari.toLowerCase()}_libur`;
+        const liberEl  = document.getElementById(liberKey);
+        data[liberKey] = liberEl ? liberEl.checked : false;
+
+        SHIFTS.forEach(shift => {
+          const key = `${outlet.id}_${hari.toLowerCase()}_${shift.toLowerCase()}`;
+          const el  = document.getElementById(key);
+          if (el) data[key] = el.value;
+        });
+      });
+    });
+
+    try {
+      await setDoc(doc(db, 'setting_absensi', 'jam_masuk'), data);
+      showToast('✅ Setting berhasil disimpan!');
+    } catch(e) {
+      console.error(e);
+      showToast('❌ Gagal menyimpan. Coba lagi.');
+    }
+
+    btn.disabled = false;
+    btn.textContent = '💾 Simpan Setting';
+  };
+
+  // ── TOAST ──────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ── KELUAR ─────────────────────────────────────────────
+  window.keluar = function() {
+    sessionStorage.clear();
+    window.location.href = 'index.html';
+  };
+
+  // ── INIT ───────────────────────────────────────────────
+  loadSetting();
 </script>
+
 </body>
 </html>
