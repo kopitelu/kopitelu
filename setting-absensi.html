@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Setting Absensi — Kopi Telu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--brown:#92400e;--amber:#b45309;--light:#fffbf5;--card:#fff;--border:#e5d8c8;--text:#1c1410;--muted:#7a6652;--green:#059669;--red:#dc2626}
+    body{font-family:'DM Sans',sans-serif;background:var(--light);color:var(--text);min-height:100vh}
+    header{background:var(--brown);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px #92400e44}
+    .header-left{display:flex;align-items:center;gap:10px}
+    .logo{width:32px;height:32px;background:#78350f;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+    .app-name{font-family:'DM Serif Display',serif;font-size:17px}
+    .btn-link{color:#fcd34d;font-size:13px;cursor:pointer;background:none;border:none;text-decoration:none}
+    .user-badge{background:#78350f;padding:3px 10px;border-radius:99px;font-size:12px;color:#fff}
+    main{max-width:700px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:40px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px}
+    .card-title{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+    .form-group{margin-bottom:12px}
+    .form-group label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}
+    .form-group input,.form-group select{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;background:#fafaf8;outline:none}
+    .form-group input:focus{border-color:var(--amber)}
+    .btn-full{width:100%;padding:12px;font-size:14px;font-weight:700;border:none;border-radius:12px;cursor:pointer;font-family:'DM Sans',sans-serif;background:var(--brown);color:#fff;margin-top:4px}
+    .btn-full:hover{background:var(--amber)}
+    .outlet-card{background:var(--light);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
+    .outlet-card-title{font-size:14px;font-weight:600;margin-bottom:10px}
+    .time-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .msg-success{background:#f0fdf4;border:1px solid #6ee7b7;border-radius:8px;padding:8px 12px;font-size:12px;color:var(--green);margin-bottom:10px;display:none}
+  </style>
+</head>
+<body>
+<header>
+  <div class="header-left">
+    <div class="logo">☕</div>
+    <span class="app-name">Kopi Telu Report</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="user-badge" id="user-badge">-</span>
+    <a href="dashboard.html" class="btn-link">← Dashboard</a>
+    <button class="btn-link" onclick="doLogout()">Keluar →</button>
+  </div>
+</header>
+
+<main>
+  <div>
+    <div style="font-family:'DM Serif Display',serif;font-size:22px">⚙️ Setting Absensi</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:2px">Atur jam batas masuk per shift per outlet</div>
+  </div>
+
+  <div class="msg-success" id="msg-success">✅ Setting berhasil disimpan!</div>
+
+  <div class="card">
+    <div class="card-title">⏰ Jam Batas Masuk per Outlet</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">
+      Pegawai yang check-in setelah jam ini akan dihitung terlambat.
+    </div>
+    <div id="outlet-settings"><div style="text-align:center;padding:20px;color:var(--muted)">Memuat...</div></div>
+    <button class="btn-full" onclick="saveSettings()">💾 Simpan Setting</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📍 Info Radius Toleransi</div>
+    <div style="font-size:13px;color:var(--muted)">
+      Radius toleransi GPS: <strong>100 meter</strong> dari koordinat outlet.<br/>
+      Pegawai yang check-in di luar radius akan mendapat warning tapi tetap bisa absen.
+    </div>
+  </div>
+</main>
+
+<script type="module">
+  import { Auth, OutletManager } from './js/auth.js';
+  import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+  import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, query, where } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+
+  const user = Auth.requireAuth('owner');
+  if (!user) throw new Error();
+  document.getElementById('user-badge').textContent = user.nama;
+  window.doLogout = () => Auth.logout();
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAx4RfDW-UdkFf3m_wQuSdeptqssE7n2wU",
+    authDomain: "cafe-shift-report-70c6c.firebaseapp.com",
+    projectId: "cafe-shift-report-70c6c",
+    storageBucket: "cafe-shift-report-70c6c.firebasestorage.app",
+    messagingSenderId: "461174765046",
+    appId: "1:461174765046:web:660d43de856294644343d7"
+  };
+  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  let allOutlets = [];
+  let existingSettings = {};
+
+  async function init() {
+    allOutlets = await OutletManager.getAll();
+    // Load existing settings
+    const snap = await getDocs(collection(db, "setting_absensi"));
+    snap.docs.forEach(d => { existingSettings[d.data().outlet] = { id: d.id, ...d.data() }; });
+    renderSettings();
+  }
+  init();
+
+  function renderSettings() {
+    const container = document.getElementById('outlet-settings');
+    container.innerHTML = allOutlets.map(o => {
+      const s = existingSettings[o.id] || {};
+      return `<div class="outlet-card">
+        <div class="outlet-card-title">🏪 ${o.nama}</div>
+        <div class="time-grid">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Batas Jam Masuk — Shift Pagi</label>
+            <input type="time" id="pagi-${o.id}" value="${s.batasPagi || '08:00'}"/>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Batas Jam Masuk — Shift Sore</label>
+            <input type="time" id="sore-${o.id}" value="${s.batasSore || '14:00'}"/>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  window.saveSettings = async function() {
+    const btn = document.querySelector('.btn-full');
+    btn.disabled = true; btn.textContent = '⏳ Menyimpan...';
+    try {
+      for (const o of allOutlets) {
+        const batasPagi = document.getElementById(`pagi-${o.id}`).value;
+        const batasSore = document.getElementById(`sore-${o.id}`).value;
+        const data = { outlet: o.id, outletNama: o.nama, batasPagi, batasSore, updatedAt: new Date().toISOString() };
+        if (existingSettings[o.id]) {
+          await updateDoc(doc(db, "setting_absensi", existingSettings[o.id].id), data);
+        } else {
+          const ref = await addDoc(collection(db, "setting_absensi"), data);
+          existingSettings[o.id] = { id: ref.id, ...data };
+        }
+      }
+      document.getElementById('msg-success').style.display = 'block';
+      setTimeout(() => document.getElementById('msg-success').style.display = 'none', 3000);
+    } catch(e) { alert('Error: ' + e.message); }
+    finally { btn.disabled = false; btn.textContent = '💾 Simpan Setting'; }
+  };
+</script>
+</body>
+</html>
