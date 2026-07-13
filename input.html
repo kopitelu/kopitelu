@@ -21,6 +21,7 @@
     .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px}
     .card-title{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
     .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .form-group{margin-bottom:12px}
     .form-group label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
     .form-group input,.form-group select,.form-group textarea{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);background:#fafaf8;outline:none;transition:border-color .2s}
     .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--amber);background:#fff}
@@ -55,6 +56,7 @@
     .input-prefix{position:relative}
     .input-prefix span{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted);pointer-events:none}
     .input-prefix input{padding-left:32px}
+    .field-hidden{display:none!important}
   </style>
 </head>
 <body>
@@ -80,11 +82,9 @@
   </div>
   <div id="duplicate-warning" style="display:none;background:#fef2f2;border:1.5px solid #fecaca;border-radius:14px;padding:14px 16px;align-items:center;gap:12px">
     <div style="font-size:22px">⛔</div>
-    <div>
-      <strong style="font-size:13px;color:#991b1b;display:block">Laporan sudah pernah diinput!</strong>
-      <span style="font-size:12px;color:#b91c1c">Shift ini di outlet ini sudah ada laporannya.</span>
-    </div>
+    <div><strong style="font-size:13px;color:#991b1b;display:block">Laporan sudah pernah diinput!</strong><span style="font-size:12px;color:#b91c1c">Shift ini sudah ada laporannya.</span></div>
   </div>
+
   <div class="card">
     <div class="card-title">📋 Info Shift</div>
     <div class="grid-2" style="margin-bottom:12px">
@@ -105,6 +105,7 @@
       <select id="f-outlet"><option value="">-- Memuat outlet... --</option></select>
     </div>
   </div>
+
   <div class="card">
     <div class="card-title">👥 Absensi Karyawan</div>
     <div class="karyawan-add">
@@ -113,35 +114,60 @@
     </div>
     <div class="tags" id="karyawan-tags"></div>
   </div>
+
   <div class="card">
     <div class="card-title">💰 Data Penjualan</div>
     <div class="divider-label">Modal Awal</div>
-    <div class="form-group" style="margin-bottom:16px">
+    <div class="form-group">
       <label>Starting Cash — Uang di Laci Saat Buka (Rp)</label>
-      <div class="input-prefix"><span>Rp</span><input type="number" id="f-starting-cash" placeholder="0" min="0"/></div>
+      <div class="input-prefix"><span>Rp</span><input type="text" inputmode="numeric" id="f-starting-cash" placeholder="0"/></div>
     </div>
-    <div class="divider-label">Penjualan</div>
-    <div class="form-group" style="margin-bottom:12px">
+    <div class="divider-label">Penjualan Tunai & Non-Tunai</div>
+    <div class="form-group">
       <label>Penjualan Cash (Rp)</label>
-      <div class="input-prefix"><span>Rp</span><input type="number" id="f-cash" placeholder="0" min="0"/></div>
+      <div class="input-prefix"><span>Rp</span><input type="text" inputmode="numeric" id="f-cash" placeholder="0"/></div>
     </div>
-    <div class="form-group" style="margin-bottom:12px">
+    <!-- EDC Single (default) -->
+    <div class="form-group" id="field-edc">
       <label>Penjualan EDC / Transfer (Rp)</label>
-      <div class="input-prefix"><span>Rp</span><input type="number" id="f-edc" placeholder="0" min="0"/></div>
+      <div class="input-prefix"><span>Rp</span><input type="text" inputmode="numeric" id="f-edc" placeholder="0"/></div>
     </div>
-    <div class="form-group" style="margin-bottom:12px">
-      <label>Penjualan Online — Grab (Rp)</label>
-      <div class="input-prefix"><span>Rp</span><input type="number" id="f-grab" placeholder="0" min="0"/></div>
+    <!-- EDC Mandiri (Tanara) -->
+    <div class="form-group field-hidden" id="field-edc-mandiri">
+      <label>EDC Mandiri (Rp)</label>
+      <div class="input-prefix"><span>Rp</span><input type="text" inputmode="numeric" id="f-edc-mandiri" placeholder="0"/></div>
+    </div>
+    <!-- EDC BRI (Tanara) -->
+    <div class="form-group field-hidden" id="field-edc-bri">
+      <label>EDC BRI (Rp)</label>
+      <div class="input-prefix"><span>Rp</span><input type="text" inputmode="numeric" id="f-edc-bri" placeholder="0"/></div>
+    </div>
+    <div class="divider-label" id="divider-online" style="display:none">Penjualan Online</div>
+    <!-- Grab -->
+    <div class="form-group field-hidden" id="field-grab">
+      <label>Grab (Rp)</label>
+      <div class="input-prefix"><span>Rp</span><input type="text" inputmode="numeric" id="f-grab" placeholder="0"/></div>
+    </div>
+    <!-- GoFood -->
+    <div class="form-group field-hidden" id="field-gofood">
+      <label>GoFood (Rp)</label>
+      <div class="input-prefix"><span>Rp</span><input type="text" inputmode="numeric" id="f-gofood" placeholder="0"/></div>
+    </div>
+    <!-- ShopeeFood -->
+    <div class="form-group field-hidden" id="field-shopee">
+      <label>ShopeeFood (Rp)</label>
+      <div class="input-prefix"><span>Rp</span><input type="text" inputmode="numeric" id="f-shopee" placeholder="0"/></div>
     </div>
     <div class="form-group">
       <label>Diskon Member (Rp)</label>
-      <div class="input-prefix"><span>Rp</span><input type="number" id="f-diskon" placeholder="0" min="0"/></div>
+      <div class="input-prefix"><span>Rp</span><input type="text" inputmode="numeric" id="f-diskon" placeholder="0"/></div>
     </div>
     <div class="total-box total-omset">
       <span class="lbl">Total Omset</span>
       <span class="val" id="total-omset-val">Rp 0</span>
     </div>
   </div>
+
   <div class="card">
     <div class="card-title">🧾 Pengeluaran</div>
     <div id="peng-rows"></div>
@@ -151,20 +177,23 @@
       <span class="val" id="total-peng-val">Rp 0</span>
     </div>
   </div>
+
   <div class="card">
     <div class="card-title">🏦 Kas Akhir</div>
     <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#166534;line-height:1.6">
-      Hitung semua uang tunai fisik di laci saat <strong>menutup shift</strong>, lalu masukkan totalnya di bawah.
+      Hitung semua uang tunai fisik di laci saat <strong>menutup shift</strong>.
     </div>
     <div class="form-group">
       <label>Kas Akhir Aktual — Hitung Fisik Uang di Laci (Rp)</label>
       <div class="input-prefix"><span>Rp</span><input type="text" inputmode="numeric" id="f-kas-akhir" placeholder="0"/></div>
     </div>
   </div>
+
   <div class="card">
     <div class="card-title">📝 Catatan Shift</div>
     <div class="form-group"><textarea id="f-catatan" placeholder="Catatan kejadian khusus, kendala, atau info penting lainnya..."></textarea></div>
   </div>
+
   <button class="btn-submit" id="btn-submit">💾 Simpan Laporan Shift</button>
 </main>
 
@@ -172,18 +201,55 @@
   import { Auth, OutletManager } from './js/auth.js';
   import { Storage } from './js/firebase.js';
 
-  // ── TELEGRAM CONFIG ───────────────────────────────────────
-  const TG_TOKEN   = '8613637829:AAERHEyn8KfJRcJIDra-w3h-kgYcS29WhMQ';
-  const TG_CHAT    = '-1004291425176';
-  const TG_TOPIC   = { laporan: 2, setoran: 3, gudang: 7, absensi: 8 };
-
+  const TG_TOKEN = '8613637829:AAERHEyn8KfJRcJIDra-w3h-kgYcS29WhMQ';
+  const TG_CHAT  = '-1004291425176';
+  const TG_TOPIC = { laporan: 2, setoran: 3, gudang: 7, absensi: 8 };
   async function kirimTG(pesan, topik) {
-    const body = { chat_id: TG_CHAT, text: pesan, parse_mode: 'Markdown', message_thread_id: TG_TOPIC[topik] };
     await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: TG_CHAT, message_thread_id: TG_TOPIC[topik], text: pesan, parse_mode: 'Markdown' })
     });
   }
 
+  // ── CONFIG PER OUTLET ─────────────────────────────────────
+  // online: field online yang ditampilkan
+  // edc: 'single' = 1 EDC generik, array = nama bank (multi EDC)
+  const OUTLET_CONFIG = {
+    outlet1: { online: [],                   edc: 'single' }, // Sawah View
+    outlet2: { online: [],                   edc: 'single' }, // Awang Awang
+    outlet3: { online: ['grab','gofood'],    edc: 'single' }, // Citraland
+    outlet4: { online: [],                   edc: 'single' }, // Bar Eskrim
+    outlet5: { online: ['grab','shopee'],    edc: ['mandiri','bri'] }, // Tanara
+  };
+
+  const ALL_ONLINE = ['grab','gofood','shopee'];
+  const ALL_EDC    = ['edc','edc-mandiri','edc-bri'];
+  const ALL_ANGKA  = ['f-starting-cash','f-cash','f-edc','f-edc-mandiri','f-edc-bri','f-grab','f-gofood','f-shopee','f-diskon','f-kas-akhir'];
+
+  function applyOutletConfig(outletId) {
+    const cfg = OUTLET_CONFIG[outletId] || { online: [], edc: 'single' };
+
+    // Reset semua field online & EDC
+    ALL_ONLINE.forEach(f => { document.getElementById(`field-${f}`)?.classList.add('field-hidden'); document.getElementById(`f-${f}`).value=''; });
+    ALL_EDC.forEach(f => { document.getElementById(`field-${f}`)?.classList.add('field-hidden'); document.getElementById(`f-${f}`)?.value && (document.getElementById(`f-${f}`).value=''); });
+
+    // Online
+    const adaOnline = cfg.online.length > 0;
+    document.getElementById('divider-online').style.display = adaOnline ? '' : 'none';
+    cfg.online.forEach(f => document.getElementById(`field-${f}`)?.classList.remove('field-hidden'));
+
+    // EDC
+    if (cfg.edc === 'single') {
+      document.getElementById('field-edc').classList.remove('field-hidden');
+    } else {
+      document.getElementById('field-edc').classList.add('field-hidden');
+      cfg.edc.forEach(bank => document.getElementById(`field-edc-${bank}`)?.classList.remove('field-hidden'));
+    }
+
+    calcOmset();
+  }
+
+  // ── AUTH ──────────────────────────────────────────────────
   const user = Auth.requireAuth();
   if (!user) throw new Error();
   document.getElementById('user-badge').textContent = user.nama;
@@ -192,11 +258,10 @@
 
   const today = new Date();
   document.getElementById('f-tanggal').value = today.toISOString().split('T')[0];
-
   function formatTanggal(val) { if (!val) return ''; const [y,m,d]=val.split('-'); return `${d}/${m}/${y}`; }
   const tanggalInput = document.getElementById('f-tanggal');
   const tanggalLabel = document.getElementById('tanggal-display');
-  function updateTanggalDisplay() { if (tanggalLabel) tanggalLabel.textContent = formatTanggal(tanggalInput.value); }
+  function updateTanggalDisplay() { tanggalLabel.textContent = formatTanggal(tanggalInput.value); }
   tanggalInput.addEventListener('change', updateTanggalDisplay);
   updateTanggalDisplay();
 
@@ -205,30 +270,29 @@
     sel.innerHTML = '';
     const allOutlets = await OutletManager.getAll();
     const allowed = user.role === 'owner' ? allOutlets.map(o=>o.id) : (user.outlets||(user.outlet?[user.outlet]:[]));
-    if (allowed.length === 0) { sel.innerHTML = '<option value="">Tidak ada outlet terdaftar</option>'; return; }
     allOutlets.filter(o=>allowed.includes(o.id)).forEach(o => {
       const opt = document.createElement('option'); opt.value=o.id; opt.textContent=o.nama; sel.appendChild(opt);
     });
     if (allowed.length===1) { sel.value=allowed[0]; sel.disabled=true; }
     else if (user.selectedOutlet && allowed.includes(user.selectedOutlet)) sel.value=user.selectedOutlet;
+    applyOutletConfig(sel.value);
   }
   await loadOutletOptions();
 
+  document.getElementById('f-outlet').addEventListener('change', function() {
+    applyOutletConfig(this.value); loadPegawaiList(); checkDuplicate();
+  });
+
   async function loadPegawaiList() {
     const sel = document.getElementById('f-karyawan-select');
-    const outletSel = document.getElementById('f-outlet');
-    async function refresh() {
-      const selectedOutlet = outletSel.value;
-      sel.innerHTML = '<option value="">-- Pilih karyawan yang bertugas --</option>';
-      try {
-        const users = await Auth.getUsers();
-        users.filter(u=>(u.outlets||(u.outlet?[u.outlet]:[])).includes(selectedOutlet)).forEach(u => {
-          const opt=document.createElement('option'); opt.value=u.nama; opt.textContent=u.nama; sel.appendChild(opt);
-        });
-      } catch(e) { console.error('Gagal load pegawai',e); }
-    }
-    outletSel.addEventListener('change', refresh);
-    await refresh();
+    const selectedOutlet = document.getElementById('f-outlet').value;
+    sel.innerHTML = '<option value="">-- Pilih karyawan yang bertugas --</option>';
+    try {
+      const users = await Auth.getUsers();
+      users.filter(u=>(u.outlets||(u.outlet?[u.outlet]:[])).includes(selectedOutlet)).forEach(u => {
+        const opt=document.createElement('option'); opt.value=u.nama; opt.textContent=u.nama; sel.appendChild(opt);
+      });
+    } catch(e) { console.error(e); }
   }
   loadPegawaiList();
 
@@ -238,13 +302,12 @@
       karyawanList.map((n,i)=>`<span class="tag">👤 ${n}<button class="tag-x" onclick="removeK(${i})">×</button></span>`).join('');
   }
   window.removeK = i => { karyawanList.splice(i,1); renderTags(); };
-  function addKaryawan() {
+  document.getElementById('btn-add-karyawan').addEventListener('click', () => {
     const sel=document.getElementById('f-karyawan-select'); const n=sel.value;
     if (!n) return;
     if (karyawanList.includes(n)) { alert('Karyawan sudah ditambahkan!'); return; }
     karyawanList.push(n); sel.value=''; renderTags();
-  }
-  document.getElementById('btn-add-karyawan').addEventListener('click', addKaryawan);
+  });
 
   let pengList = [{ nama:'Bahan Baku', jumlah:0 }];
   function savePengValues() {
@@ -261,13 +324,7 @@
         <input type="text" placeholder="Nama pengeluaran" value="${p.nama}" oninput="pengList[${i}].nama=this.value"/>
         <input type="text" inputmode="numeric" class="peng-jumlah" placeholder="0"
           value="${p.jumlah?Number(p.jumlah).toLocaleString('id-ID'):''}"
-          oninput="
-            const raw=this.value.replace(/\\./g,'').replace(/[^\\d]/g,'');
-            const num=parseInt(raw||'0',10);
-            const pos=this.selectionStart;const prev=this.value.length;
-            this.value=num===0?'':num.toLocaleString('id-ID');
-            const diff=this.value.length-prev;this.setSelectionRange(pos+diff,pos+diff);
-            pengList[${i}].jumlah=raw;calcPeng();"/>
+          oninput="const raw=this.value.replace(/\\./g,'').replace(/[^\\d]/g,'');const num=parseInt(raw||'0',10);const pos=this.selectionStart;const prev=this.value.length;this.value=num===0?'':num.toLocaleString('id-ID');const diff=this.value.length-prev;this.setSelectionRange(pos+diff,pos+diff);pengList[${i}].jumlah=raw;calcPeng();"/>
         <button class="peng-del" onclick="removePeng(${i})">×</button>
       </div>`).join('');
     calcPeng();
@@ -276,15 +333,14 @@
   window.pengList = pengList;
   document.getElementById('btn-add-peng').addEventListener('click',()=>{ savePengValues(); pengList.push({nama:'',jumlah:0}); renderPeng(); });
 
-  function parseAngka(val) { if (!val&&val!==0) return 0; return parseInt(String(val).trim().replace(/[^\d]/g,'') || '0',10); }
+  function parseAngka(val) { return parseInt(String(val||'').trim().replace(/[^\d]/g,'')||'0',10); }
   function fmt(n) { return 'Rp '+Math.round(n).toLocaleString('id-ID'); }
 
   function setupAngkaInput(id) {
     const el=document.getElementById(id); if (!el) return;
-    el.setAttribute('type','text'); el.setAttribute('inputmode','numeric'); el.setAttribute('placeholder','0');
     el.addEventListener('keydown',function(e){
-      const allowed=['Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab','Home','End'];
-      if (allowed.includes(e.key)||e.ctrlKey||e.metaKey) return;
+      const ok=['Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab','Home','End'];
+      if (ok.includes(e.key)||e.ctrlKey||e.metaKey) return;
       if (!/^\d$/.test(e.key)) e.preventDefault();
     });
     el.addEventListener('input',function(){
@@ -294,23 +350,29 @@
       if (this.value!==formatted){
         const pos=this.selectionStart; const prevLen=this.value.length;
         this.value=formatted;
-        const newPos=Math.max(0,pos+(formatted.length-prevLen));
-        this.setSelectionRange(newPos,newPos);
+        this.setSelectionRange(Math.max(0,pos+(formatted.length-prevLen)),Math.max(0,pos+(formatted.length-prevLen)));
       }
-    });
-    el.addEventListener('paste',function(e){
-      e.preventDefault();
-      const pasted=(e.clipboardData||window.clipboardData).getData('text');
-      const num=parseInt(pasted.replace(/[^\d]/g,'')||'0',10);
-      this.value=num===0?'':num.toLocaleString('id-ID');
-      this.dispatchEvent(new Event('input'));
+      calcOmset();
     });
   }
-  const ANGKA_FIELDS=['f-starting-cash','f-cash','f-edc','f-grab','f-diskon','f-kas-akhir'];
-  ANGKA_FIELDS.forEach(setupAngkaInput);
-  function getAngka(id){return parseAngka(document.getElementById(id).value);}
-  function calcPeng(){const t=pengList.reduce((s,p)=>s+(parseAngka(p.jumlah)||0),0);document.getElementById('total-peng-val').textContent=fmt(t);}
-  function calcOmset(){const c=getAngka('f-cash'),e=getAngka('f-edc'),g=getAngka('f-grab'),d=getAngka('f-diskon');document.getElementById('total-omset-val').textContent=fmt(c+e+g-d);}
+  ALL_ANGKA.forEach(setupAngkaInput);
+
+  function getAngka(id) {
+    const el=document.getElementById(id);
+    if (!el) return 0;
+    const parent=el.closest('[id^="field-"]');
+    if (parent && parent.classList.contains('field-hidden')) return 0;
+    return parseAngka(el.value);
+  }
+
+  function calcPeng() { const t=pengList.reduce((s,p)=>s+(parseAngka(p.jumlah)||0),0); document.getElementById('total-peng-val').textContent=fmt(t); }
+  function calcOmset() {
+    const cash   = getAngka('f-cash');
+    const edc    = getAngka('f-edc') + getAngka('f-edc-mandiri') + getAngka('f-edc-bri');
+    const online = getAngka('f-grab') + getAngka('f-gofood') + getAngka('f-shopee');
+    const diskon = getAngka('f-diskon');
+    document.getElementById('total-omset-val').textContent = fmt(cash+edc+online-diskon);
+  }
 
   async function checkDuplicate() {
     const tanggal=document.getElementById('f-tanggal').value;
@@ -319,33 +381,43 @@
     if (!tanggal||!shift||!outlet) return;
     const btn=document.getElementById('btn-submit'); const warning=document.getElementById('duplicate-warning');
     try {
-      const isDuplicate=await Storage.checkDuplicate(outlet,tanggal,shift);
-      if (isDuplicate){warning.style.display='flex';btn.disabled=true;btn.textContent='⛔ Laporan Sudah Ada';btn.style.background='#d1b89a';}
+      const isDup=await Storage.checkDuplicate(outlet,tanggal,shift);
+      if (isDup){warning.style.display='flex';btn.disabled=true;btn.textContent='⛔ Laporan Sudah Ada';btn.style.background='#d1b89a';}
       else{warning.style.display='none';btn.disabled=false;btn.textContent='💾 Simpan Laporan Shift';btn.style.background='';}
-    } catch(e){console.warn('checkDuplicate error:',e);warning.style.display='none';btn.disabled=false;btn.textContent='💾 Simpan Laporan Shift';btn.style.background='';}
+    } catch(e){warning.style.display='none';btn.disabled=false;btn.textContent='💾 Simpan Laporan Shift';btn.style.background='';}
   }
-  ['f-tanggal','f-shift','f-outlet'].forEach(id=>document.getElementById(id)?.addEventListener('change',checkDuplicate));
+  ['f-tanggal','f-shift'].forEach(id=>document.getElementById(id)?.addEventListener('change',checkDuplicate));
   setTimeout(checkDuplicate,1000);
 
   document.getElementById('btn-submit').addEventListener('click', async () => {
-    const tanggal=document.getElementById('f-tanggal').value;
-    const shift=document.getElementById('f-shift').value;
-    const outlet=document.getElementById('f-outlet').value;
-    const startingCash=getAngka('f-starting-cash');
-    const cash=getAngka('f-cash'); const edc=getAngka('f-edc');
-    const grab=getAngka('f-grab'); const diskon=getAngka('f-diskon');
-    const kasAkhirAktual=getAngka('f-kas-akhir');
-    const catatan=document.getElementById('f-catatan').value;
+    const tanggal      = document.getElementById('f-tanggal').value;
+    const shift        = document.getElementById('f-shift').value;
+    const outlet       = document.getElementById('f-outlet').value;
+    const startingCash = getAngka('f-starting-cash');
+    const cash         = getAngka('f-cash');
+    const diskon       = getAngka('f-diskon');
+    const kasAkhirAktual = getAngka('f-kas-akhir');
+    const catatan      = document.getElementById('f-catatan').value;
+    const edcSingle    = getAngka('f-edc');
+    const edcMandiri   = getAngka('f-edc-mandiri');
+    const edcBRI       = getAngka('f-edc-bri');
+    const totalEdc     = edcSingle + edcMandiri + edcBRI;
+    const grab         = getAngka('f-grab');
+    const gofood       = getAngka('f-gofood');
+    const shopee       = getAngka('f-shopee');
+    const totalOnline  = grab + gofood + shopee;
+    const omset        = cash + totalEdc + totalOnline - diskon;
+
     if (!tanggal){alert('Pilih tanggal dulu!');return;}
     if (karyawanList.length===0){alert('Tambahkan minimal 1 karyawan!');return;}
+
     const btn=document.getElementById('btn-submit');
     btn.disabled=true; btn.textContent='⏳ Memeriksa...';
     try {
-      const isDuplicate=await Storage.checkDuplicate(outlet,tanggal,shift);
-      if (isDuplicate){alert('Laporan shift ini sudah pernah diinput!');btn.disabled=true;btn.textContent='⛔ Laporan Sudah Ada';return;}
+      const isDup=await Storage.checkDuplicate(outlet,tanggal,shift);
+      if (isDup){alert('Laporan shift ini sudah pernah diinput!');btn.disabled=true;btn.textContent='⛔ Laporan Sudah Ada';return;}
       btn.textContent='⏳ Menyimpan...';
       const now=new Date();
-      const omset=cash+edc+grab-diskon;
       savePengValues();
       const totalPengeluaran=pengList.filter(p=>p.nama).reduce((s,p)=>s+parseAngka(p.jumlah),0);
       const kasAkhirTeoritis=startingCash+cash-totalPengeluaran;
@@ -354,22 +426,29 @@
       const waktuInput=now.toLocaleString('id-ID',{timeZone:'Asia/Jakarta',hour12:false});
 
       await Storage.saveReport({
-        outlet,shift,tanggal,startingCash,cash,edc,grab,diskon,omset,
-        pengeluaran:pengList.filter(p=>p.nama).map(p=>({nama:p.nama,jumlah:parseAngka(p.jumlah)})),
-        totalPengeluaran,kasAkhirAktual,kasAkhirTeoritis,selisihKas,
-        karyawan:[...karyawanList],catatan,
-        inputBy:user.username,inputByNama:user.nama,
-        createdAt:now.toISOString(),createdAtWIB:waktuInput
+        outlet, shift, tanggal, startingCash, cash, diskon, omset,
+        edc: edcSingle, edcMandiri, edcBRI, totalEdc,
+        grab, gofood, shopee, totalOnline,
+        pengeluaran: pengList.filter(p=>p.nama).map(p=>({nama:p.nama,jumlah:parseAngka(p.jumlah)})),
+        totalPengeluaran, kasAkhirAktual, kasAkhirTeoritis, selisihKas,
+        karyawan:[...karyawanList], catatan,
+        inputBy:user.username, inputByNama:user.nama,
+        createdAt:now.toISOString(), createdAtWIB:waktuInput
       });
 
-      // Notif Telegram → topik Laporan Shift
       btn.textContent='📨 Mengirim notifikasi...';
       try {
         const fmtRp=n=>'Rp '+Math.round(n).toLocaleString('id-ID');
-        const pengeluaranDetail=pengList.filter(p=>p.nama&&parseAngka(p.jumlah)>0)
-          .map(p=>`  • ${p.nama}: ${fmtRp(parseAngka(p.jumlah))}`).join('\n')||'  • -';
-        const kasInfo=kasAkhirAktual>0
-          ?`\n💰 *Kas Akhir*\n  • Teoritis: ${fmtRp(kasAkhirTeoritis)}\n  • Aktual: ${fmtRp(kasAkhirAktual)}\n  • Selisih: ${selisihKas===0?'✅ Rp 0':(selisihKas>0?'⚠️ +':'🚨 ')+fmtRp(selisihKas)}`:'';
+        let edcLines='';
+        if (edcSingle>0) edcLines+=`  • EDC/Transfer: ${fmtRp(edcSingle)}\n`;
+        if (edcMandiri>0) edcLines+=`  • EDC Mandiri: ${fmtRp(edcMandiri)}\n`;
+        if (edcBRI>0) edcLines+=`  • EDC BRI: ${fmtRp(edcBRI)}\n`;
+        let onlineLines='';
+        if (grab>0) onlineLines+=`  • Grab: ${fmtRp(grab)}\n`;
+        if (gofood>0) onlineLines+=`  • GoFood: ${fmtRp(gofood)}\n`;
+        if (shopee>0) onlineLines+=`  • ShopeeFood: ${fmtRp(shopee)}\n`;
+        const pengeluaranDetail=pengList.filter(p=>p.nama&&parseAngka(p.jumlah)>0).map(p=>`  • ${p.nama}: ${fmtRp(parseAngka(p.jumlah))}`).join('\n')||'  • -';
+        const kasInfo=kasAkhirAktual>0?`\n💰 *Kas Akhir*\n  • Teoritis: ${fmtRp(kasAkhirTeoritis)}\n  • Aktual: ${fmtRp(kasAkhirAktual)}\n  • Selisih: ${selisihKas===0?'✅ Rp 0':(selisihKas>0?'⚠️ +':'🚨 ')+fmtRp(selisihKas)}`:'';
 
         let startingCashInfo='';
         try {
@@ -390,15 +469,15 @@
               else startingCashInfo=`\n🚨 *Starting Cash tidak sesuai!*\n  • Seharusnya: ${fmtRp(expectedStarting)}\n  • Diinput: ${fmtRp(startingCash)}\n  • Selisih: ${selisihStarting>0?'+':''}${fmtRp(selisihStarting)}`;
             }
           }
-        } catch(e){console.warn('Starting cash check error:',e);}
+        } catch(e){console.warn(e);}
 
-        const pesan=`☕ *LAPORAN SHIFT MASUK*\n\n🏪 *${outletNama}*\n📅 ${tanggal.split('-').reverse().join('/')} — Shift ${shift}\n👤 ${karyawanList.join(', ')}\n🕐 ${waktuInput}\n\n💵 *Penjualan*\n  • Cash: ${fmtRp(cash)}\n  • EDC: ${fmtRp(edc)}\n  • Grab: ${fmtRp(grab)}\n  • Diskon: ${fmtRp(diskon)}\n  • *Total Omset: ${fmtRp(omset)}*\n\n🧾 *Pengeluaran* (${fmtRp(totalPengeluaran)})\n${pengeluaranDetail}${kasInfo}${startingCashInfo}${catatan?`\n\n📝 _${catatan}_`:''}\n\n_Diinput oleh: ${user.nama}_`;
-        await kirimTG(pesan, 'laporan');
-      } catch(tgErr){console.warn('Notifikasi Telegram gagal:',tgErr);}
+        const pesan=`☕ *LAPORAN SHIFT MASUK*\n\n🏪 *${outletNama}*\n📅 ${tanggal.split('-').reverse().join('/')} — Shift ${shift}\n👤 ${karyawanList.join(', ')}\n🕐 ${waktuInput}\n\n💵 *Penjualan*\n  • Cash: ${fmtRp(cash)}\n${edcLines}${onlineLines}  • Diskon: ${fmtRp(diskon)}\n  • *Total Omset: ${fmtRp(omset)}*\n\n🧾 *Pengeluaran* (${fmtRp(totalPengeluaran)})\n${pengeluaranDetail}${kasInfo}${startingCashInfo}${catatan?`\n\n📝 _${catatan}_`:''}\n\n_Diinput oleh: ${user.nama}_`;
+        await kirimTG(pesan,'laporan');
+      } catch(tgErr){console.warn('Telegram gagal:',tgErr);}
 
       karyawanList=[]; pengList=[{nama:'Bahan Baku',jumlah:0}];
       renderTags(); renderPeng(); calcOmset();
-      ANGKA_FIELDS.forEach(id=>document.getElementById(id).value='');
+      ALL_ANGKA.forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
       document.getElementById('f-catatan').value='';
       document.getElementById('f-tanggal').value=new Date().toISOString().split('T')[0];
       updateTanggalDisplay(); checkDuplicate();
@@ -413,6 +492,7 @@
       if (!isDup){btn.disabled=false;btn.textContent='💾 Simpan Laporan Shift';btn.style.background='';}
     }
   });
+
   renderPeng();
 </script>
 </body>
