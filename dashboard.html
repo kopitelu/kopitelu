@@ -1049,7 +1049,7 @@
   });
 
   // ---- Tab: Outlet ----
-  async function loadOutletList() {
+  window.loadOutletList = async function loadOutletList() {
     const list = document.getElementById('outlet-list');
     list.innerHTML = '<div style="color:var(--muted);font-size:13px">Memuat...</div>';
     const outlets = await OutletManager.getAll();
