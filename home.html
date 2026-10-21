@@ -132,35 +132,9 @@
     <div class="menu-arrow">›</div>
   </a>
 
-  <a href="inventori.html" class="menu-card" id="menu-inventori" style="display:none">
-    <div class="menu-icon" style="background:#dbeafe">🏭</div>
-    <div class="menu-info">
-      <div class="menu-title">Inventori Gudang</div>
-      <div class="menu-desc">Kelola stok dan pengiriman barang ke outlet</div>
-      <span class="menu-badge" style="background:#dbeafe;color:#1e40af">Gudang</span>
-    </div>
-    <div class="menu-arrow">›</div>
-  </a>
 
-  <a href="master-item.html" class="menu-card" id="menu-master-item" style="display:none">
-    <div class="menu-icon" style="background:#ede9fe">📋</div>
-    <div class="menu-info">
-      <div class="menu-title">Master Item</div>
-      <div class="menu-desc">Kelola daftar semua bahan baku</div>
-      <span class="menu-badge" style="background:#ede9fe;color:#5b21b6">Gudang</span>
-    </div>
-    <div class="menu-arrow">›</div>
-  </a>
 
-  <a href="stok-outlet.html" class="menu-card" id="menu-stok-outlet" style="display:none">
-    <div class="menu-icon" style="background:#d1fae5">📦</div>
-    <div class="menu-info">
-      <div class="menu-title">Stok Outlet</div>
-      <div class="menu-desc">Lihat dan kelola stok bahan di outlet</div>
-      <span class="menu-badge" style="background:#d1fae5;color:#065f46">Outlet</span>
-    </div>
-    <div class="menu-arrow">›</div>
-  </a>
+
 </main>
 
 <script type="module">
@@ -194,13 +168,6 @@
   if (user.aksesKeuangan || user.role === 'keuangan') {
     document.getElementById('menu-keuangan').style.display = 'flex';
   }
-  // Tampilkan menu inventori dan master item kalau punya akses gudang
-  if (user.aksesGudang || user.role === 'gudang') {
-    document.getElementById('menu-inventori').style.display = 'flex';
-    document.getElementById('menu-master-item').style.display = 'flex';
-  }
-  // Stok outlet bisa dilihat semua pegawai
-  document.getElementById('menu-stok-outlet').style.display = 'flex';
   try {
     const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js');
     const { getFirestore, collection, getDocs, query, where, orderBy } = await import('https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js');
