@@ -89,6 +89,15 @@
     </div>
   </div>
 
+  <!-- Warning belum serah terima -->
+  <div id="serah-warning" style="display:none;background:#fff7ed;border:1.5px solid #fdba74;border-radius:14px;padding:14px 16px;align-items:center;gap:12px">
+    <div style="font-size:22px">🤝</div>
+    <div>
+      <strong style="font-size:13px;color:#9a3412;display:block">Serah terima kas belum diisi!</strong>
+      <span style="font-size:12px;color:#9a3412">Serah terima shift ini di outlet ini belum ada. <a href="serahterima.html" style="color:#9a3412;font-weight:700">Isi Serah Terima Kas →</a></span>
+    </div>
+  </div>
+
   <!-- Warning salah pilih shift -->
   <div id="shift-warning" style="display:none;background:#fffbeb;border:1.5px solid #fde68a;border-radius:14px;padding:14px 16px;align-items:center;gap:12px">
     <div style="font-size:22px">⚠️</div>
@@ -110,7 +119,6 @@
       <div class="form-group"><label>Shift</label>
         <select id="f-shift">
           <option value="Pagi">🌅 Shift Pagi</option>
-          <option value="Middle">☀️ Shift Middle</option>
           <option value="Sore">🌆 Shift Sore</option>
         </select>
       </div>
@@ -349,6 +357,7 @@
   }
   window.removePeng = i => { savePengValues(); pengList.splice(i, 1); renderPeng(); };
   window.pengList = pengList;
+  window.calcPeng = () => calcPeng();
 
   document.getElementById('btn-add-peng').addEventListener('click', () => {
     savePengValues();
@@ -400,6 +409,7 @@
         const newPos = Math.max(0, pos + diff);
         this.setSelectionRange(newPos, newPos);
       }
+      calcOmset();   // perbarui Total Omset setiap angka berubah
     });
 
     // Saat paste — bersihkan otomatis
@@ -481,14 +491,29 @@
     document.getElementById('shift-warning').style.display = (await pagiBelumAda()) ? 'flex' : 'none';
   }
 
+  // Cek: serah terima shift ini belum diisi (hanya Pagi/Sore)
+  async function serahBelumAda() {
+    const tanggal = document.getElementById('f-tanggal').value;
+    const shift   = document.getElementById('f-shift').value;
+    const outlet  = document.getElementById('f-outlet').value;
+    if (!['Pagi', 'Sore'].includes(shift) || !tanggal || !outlet) return false;
+    try { return !(await Storage.checkSerahTerima(outlet, tanggal, shift)); }
+    catch(e) { return false; }
+  }
+  async function cekSerahTerima() {
+    document.getElementById('serah-warning').style.display = (await serahBelumAda()) ? 'flex' : 'none';
+  }
+
   ['f-tanggal','f-shift','f-outlet'].forEach(id => {
     document.getElementById(id)?.addEventListener('change', checkDuplicate);
     document.getElementById(id)?.addEventListener('change', cekUrutanShift);
+    document.getElementById(id)?.addEventListener('change', cekSerahTerima);
   });
 
   // Jalankan sekali saat load
   setTimeout(checkDuplicate, 1000);
   setTimeout(cekUrutanShift, 1200);
+  setTimeout(cekSerahTerima, 1400);
 
   // Submit
   document.getElementById('btn-submit').addEventListener('click', async () => {
@@ -505,6 +530,23 @@
 
     if (!tanggal) { alert('Pilih tanggal dulu!'); return; }
     if (karyawanList.length === 0) { alert('Tambahkan minimal 1 karyawan yang bertugas!'); return; }
+
+    // Validasi pengeluaran: setiap baris yang ada nominalnya wajib diberi nama
+    savePengValues();
+    const pengIsi = pengList.filter(p => parseAngka(p.jumlah) > 0);
+    const tanpaNama = pengIsi.find(p => !(p.nama || '').trim());
+    if (tanpaNama) {
+      alert('Ada pengeluaran ' + fmt(parseAngka(tanpaNama.jumlah)) + ' yang belum diberi nama.\n\nIsi nama pengeluarannya, atau hapus barisnya kalau tidak jadi.');
+      return;
+    }
+
+    // Validasi kas akhir: wajib diisi
+    if (kasAkhirAktual <= 0) {
+      alert('Kas Akhir wajib diisi!\n\nHitung semua uang tunai fisik di laci, lalu masukkan totalnya di kolom Kas Akhir.');
+      document.getElementById('f-kas-akhir').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.getElementById('f-kas-akhir').focus();
+      return;
+    }
 
     const btn = document.getElementById('btn-submit');
     btn.disabled = true; btn.textContent = '⏳ Memeriksa...';
@@ -525,11 +567,26 @@
         if (!ok) { btn.disabled = false; btn.textContent = '💾 Simpan Laporan Shift'; return; }
       }
 
+      // Pengaman lupa serah terima: laporan boleh lanjut, tapi owner diberi tahu lewat Telegram
+      const serahBelum = await serahBelumAda();
+      if (serahBelum) {
+        const ok2 = confirm('🤝 SERAH TERIMA SHIFT ' + shift.toUpperCase() + ' BELUM DIISI.\n\nTekan BATAL, lalu isi dulu di menu Serah Terima Kas.\n\nTekan OK hanya jika memang tidak ada serah terima (owner akan diberi tahu).');
+        if (!ok2) { btn.disabled = false; btn.textContent = '💾 Simpan Laporan Shift'; return; }
+      }
+
+      // Peringatan hitung ulang: muncul SEKALI kalau kas akhir berbeda dari hitungan sistem.
+      // Angka sistem sengaja tidak ditampilkan supaya pegawai tidak menyesuaikan hitungan.
+      const teoritisCek = startingCash + cash - pengIsi.reduce((s, p) => s + parseAngka(p.jumlah), 0);
+      if (!window.__selisihWarned && kasAkhirAktual !== teoritisCek) {
+        window.__selisihWarned = true;
+        const lanjut = confirm('⚠️ Kas Akhir yang kamu isi BERBEDA dari hitungan sistem.\n\nSebelum disimpan, tolong cek lagi:\n• Hitung ulang uang fisik di laci\n• Periksa Starting Cash, penjualan cash, dan pengeluaran\n\nTekan BATAL untuk memeriksa ulang.\nTekan OK jika kamu sudah yakin semuanya benar.');
+        if (!lanjut) { btn.disabled = false; btn.textContent = '💾 Simpan Laporan Shift'; return; }
+      }
+
       btn.textContent = '⏳ Menyimpan...';
       const now = new Date();
       const omset = cash + edc + grab - diskon;
-      savePengValues();
-    const totalPengeluaran = pengList.filter(p => p.nama).reduce((s, p) => s + parseAngka(p.jumlah), 0);
+      const totalPengeluaran = pengIsi.reduce((s, p) => s + parseAngka(p.jumlah), 0);
       const kasAkhirTeoritis = startingCash + cash - totalPengeluaran;
       const selisihKas = kasAkhirAktual > 0 ? kasAkhirAktual - kasAkhirTeoritis : null;
       const outletNama = (await OutletManager.getNamesMap())[outlet] || outlet;
@@ -537,7 +594,7 @@
 
       await Storage.saveReport({
         outlet, shift, tanggal, startingCash, cash, edc, grab, diskon, omset,
-        pengeluaran: pengList.filter(p => p.nama).map(p => ({ nama: p.nama, jumlah: parseAngka(p.jumlah) })),
+        pengeluaran: pengIsi.map(p => ({ nama: p.nama.trim(), jumlah: parseAngka(p.jumlah) })),
         totalPengeluaran,
         kasAkhirAktual, kasAkhirTeoritis, selisihKas,
         karyawan: [...karyawanList],
@@ -558,6 +615,9 @@
           ? `\n💰 *Kas Akhir*\n  • Teoritis: ${fmtRp(kasAkhirTeoritis)}\n  • Aktual: ${fmtRp(kasAkhirAktual)}\n  • Selisih: ${selisihKas === 0 ? '✅ Rp 0' : (selisihKas > 0 ? '⚠️ +' : '🚨 ') + fmtRp(selisihKas)}`
           : '';
 
+        // Batas waktu supaya pengecekan tambahan tidak menahan pengiriman notifikasi di jaringan lambat
+        const withTimeout = (pr, ms) => Promise.race([pr, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+
         // Cek Starting Cash vs Kas Akhir shift sebelumnya
         let startingCashInfo = '';
         try {
@@ -569,12 +629,12 @@
               ? (() => { const d = new Date(nowWIB); d.setDate(d.getDate() - 1); return d.toISOString().split('T')[0]; })()
               : tanggal;
 
-            const prevReports = await Storage.getReports(outlet, prevTanggal, prevTanggal);
+            const prevReports = await withTimeout(Storage.getReports(outlet, prevTanggal, prevTanggal), 5000);
             const prevReport = prevReports.find(r => r.shift === prevShift);
 
             if (prevReport && prevReport.kasAkhirAktual > 0) {
               // Cek setoran antar shift
-              const setoranSnap = await Storage.getSetoranByDate(prevTanggal);
+              const setoranSnap = await withTimeout(Storage.getSetoranByDate(prevTanggal), 5000);
               const setoranOutlet = setoranSnap.filter(s =>
                 s.outlet === outlet &&
                 s.createdAt > (prevReport.createdAt || '') &&
@@ -607,18 +667,24 @@
           `🧾 *Pengeluaran* (${fmtRp(totalPengeluaran)})\n${pengeluaranDetail}` +
           kasInfo +
           startingCashInfo +
+          (serahBelum ? `\n\n🤝 ⚠️ *Serah terima shift ${shift} BELUM diisi*` : '') +
           (catatan ? `\n\n📝 _${catatan}_` : '') +
           `\n\n_Diinput oleh: ${user.nama}_`;
 
-        await fetch(`https://api.telegram.org/bot8613637829:AAERHEyn8KfJRcJIDra-w3h-kgYcS29WhMQ/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: '7202941698',
-            text: pesan,
-            parse_mode: 'Markdown'
-          })
-        });
+        // Kirim ke Telegram. Kalau ditolak (biasanya karena karakter Markdown seperti _ * [ di nama/catatan),
+        // kirim ulang sebagai teks biasa supaya laporan tetap sampai.
+        const tgUrl = `https://api.telegram.org/bot8613637829:AAERHEyn8KfJRcJIDra-w3h-kgYcS29WhMQ/sendMessage`;
+        const kirimTg = async (body) => {
+          const r = await fetch(tgUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), keepalive: true });
+          let j = {}; try { j = await r.json(); } catch(e) {}
+          return { ok: r.ok && j.ok !== false, j };
+        };
+        let tgRes = await kirimTg({ chat_id: '7202941698', text: pesan, parse_mode: 'Markdown' });
+        if (!tgRes.ok) {
+          console.warn('Telegram (Markdown) ditolak:', tgRes.j);
+          tgRes = await kirimTg({ chat_id: '7202941698', text: pesan.replace(/[*_`]/g, '') });
+        }
+        if (!tgRes.ok) console.warn('Telegram gagal terkirim:', tgRes.j);
       } catch(tgErr) {
         console.warn('Notifikasi Telegram gagal:', tgErr);
         // Tidak gagalkan laporan meski notifikasi error
@@ -626,6 +692,7 @@
 
       // Reset form
       karyawanList = []; pengList = [{ nama: 'Bahan Baku', jumlah: 0 }];
+      window.pengList = pengList; window.__selisihWarned = false;
       renderTags(); renderPeng(); calcOmset();
       ANGKA_FIELDS.forEach(id => document.getElementById(id).value = '');
       document.getElementById('f-catatan').value = '';
