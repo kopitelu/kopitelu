@@ -1038,7 +1038,9 @@
   async function loadOutletList() {
     const list = document.getElementById('outlet-list');
     list.innerHTML = '<div style="color:var(--muted);font-size:13px">Memuat...</div>';
-    const outlets = await OutletManager.getAll();
+    let outlets;
+    try { outlets = await OutletManager.getAll(); }
+    catch(e) { list.innerHTML = '<div style="color:var(--red);font-size:13px">Gagal memuat outlet: ' + e.message + '</div>'; return; }
     list.innerHTML = outlets.map((o, i) => {
       const color = outletColor(i);
       return `<div class="user-item">
@@ -1060,6 +1062,8 @@
       </div>`;
     }).join('');
   }
+
+  window.loadOutletList = loadOutletList;
 
   window.toggleOutletEdit = (id) => {
     document.getElementById(`outlet-view-${id}`).style.display = 'none';
