@@ -123,6 +123,7 @@
 </main>
 
 <script type="module">
+  import { kirimTelegram } from './js/telegram.js';
   import { Auth, OutletManager } from './js/auth.js';
   import { Storage } from './js/firebase.js';
 
@@ -232,11 +233,7 @@
           (catatan ? `📝 _${catatan}_\n` : '') +
           `\n_Diinput oleh: ${user.nama}_`;
 
-        await fetch(`https://api.telegram.org/bot8613637829:AAERHEyn8KfJRcJIDra-w3h-kgYcS29WhMQ/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: '-1004291425176', message_thread_id: 3, text: pesan, parse_mode: 'Markdown' })
-        });
+        await kirimTelegram('setoran', pesan);
       } catch(e) { console.warn('Telegram gagal:', e); }
 
       // Reset
