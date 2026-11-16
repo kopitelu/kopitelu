@@ -165,6 +165,16 @@
       <label>Penjualan Online — Grab (Rp)</label>
       <div class="input-prefix"><span>Rp</span><input type="number" id="f-grab" placeholder="0" min="0"/></div>
     </div>
+    <div id="box-online-extra" style="display:none">
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Penjualan Online — Gojek (Rp)</label>
+        <div class="input-prefix"><span>Rp</span><input type="number" id="f-gojek" placeholder="0" min="0"/></div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Penjualan Online — Shopee (Rp)</label>
+        <div class="input-prefix"><span>Rp</span><input type="number" id="f-shopee" placeholder="0" min="0"/></div>
+      </div>
+    </div>
     <div class="form-group">
       <label>Diskon Member (Rp)</label>
       <div class="input-prefix"><span>Rp</span><input type="number" id="f-diskon" placeholder="0" min="0"/></div>
@@ -424,8 +434,22 @@
     });
   }
 
-  const ANGKA_FIELDS = ['f-starting-cash','f-cash','f-edc','f-grab','f-diskon','f-kas-akhir'];
+  const ANGKA_FIELDS = ['f-starting-cash','f-cash','f-edc','f-grab','f-gojek','f-shopee','f-diskon','f-kas-akhir'];
+
+  // Outlet yang punya penjualan online tambahan (Gojek & Shopee): Tanara Tunjungan Plaza (outlet5) dan Kopi Tanara Kyo Society (outlet6)
+  const OUTLET_ONLINE_EXTRA = ['outlet5', 'outlet6'];
+  const punyaOnlineExtra = () => OUTLET_ONLINE_EXTRA.includes(document.getElementById('f-outlet').value);
+  const getGojek  = () => punyaOnlineExtra() ? getAngka('f-gojek')  : 0;
+  const getShopee = () => punyaOnlineExtra() ? getAngka('f-shopee') : 0;
+  function tampilkanKolomOnline() {
+    const box = document.getElementById('box-online-extra');
+    box.style.display = punyaOnlineExtra() ? 'block' : 'none';
+    if (!punyaOnlineExtra()) { document.getElementById('f-gojek').value = ''; document.getElementById('f-shopee').value = ''; }
+    calcOmset();
+  }
   ANGKA_FIELDS.forEach(setupAngkaInput);
+  document.getElementById('f-outlet').addEventListener('change', tampilkanKolomOnline);
+  tampilkanKolomOnline();
 
   function getAngka(id) { return parseAngka(document.getElementById(id).value); }
 
@@ -441,7 +465,7 @@
   function calcOmset() {
     const c = getAngka('f-cash');
     const e = getAngka('f-edc');
-    const g = getAngka('f-grab');
+    const g = getAngka('f-grab') + getGojek() + getShopee();
     const d = getAngka('f-diskon');
     document.getElementById('total-omset-val').textContent = fmt(c + e + g - d);
   }
@@ -525,6 +549,8 @@
     const cash           = getAngka('f-cash');
     const edc            = getAngka('f-edc');
     const grab           = getAngka('f-grab');
+    const gojek          = getGojek();
+    const shopee         = getShopee();
     const diskon         = getAngka('f-diskon');
     const kasAkhirAktual = getAngka('f-kas-akhir');
     const catatan        = document.getElementById('f-catatan').value;
@@ -586,7 +612,7 @@
 
       btn.textContent = '⏳ Menyimpan...';
       const now = new Date();
-      const omset = cash + edc + grab - diskon;
+      const omset = cash + edc + grab + gojek + shopee - diskon;
       const totalPengeluaran = pengIsi.reduce((s, p) => s + parseAngka(p.jumlah), 0);
       const kasAkhirTeoritis = startingCash + cash - totalPengeluaran;
       const selisihKas = kasAkhirAktual > 0 ? kasAkhirAktual - kasAkhirTeoritis : null;
@@ -594,7 +620,7 @@
       const waktuInput = now.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour12: false });
 
       await Storage.saveReport({
-        outlet, shift, tanggal, startingCash, cash, edc, grab, diskon, omset,
+        outlet, shift, tanggal, startingCash, cash, edc, grab, gojek, shopee, diskon, omset,
         pengeluaran: pengIsi.map(p => ({ nama: p.nama.trim(), jumlah: parseAngka(p.jumlah) })),
         totalPengeluaran,
         kasAkhirAktual, kasAkhirTeoritis, selisihKas,
@@ -664,6 +690,7 @@
           `  • Cash: ${fmtRp(cash)}\n` +
           `  • EDC: ${fmtRp(edc)}\n` +
           `  • Grab: ${fmtRp(grab)}\n` +
+          (punyaOnlineExtra() ? `  • Gojek: ${fmtRp(gojek)}\n  • Shopee: ${fmtRp(shopee)}\n` : '') +
           `  • Diskon: ${fmtRp(diskon)}\n` +
           `  • *Total Omset: ${fmtRp(omset)}*\n\n` +
           `🧾 *Pengeluaran* (${fmtRp(totalPengeluaran)})\n${pengeluaranDetail}` +
