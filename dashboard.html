@@ -176,6 +176,15 @@
     .form-group label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
     .form-group input,.form-group select{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);background:#fafaf8;outline:none}
     .form-group input:focus,.form-group select:focus{border-color:var(--amber)}
+    .rk-label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:12px 0 4px}
+    .rk-input{width:100%;padding:10px 12px;font-size:14px;border:1.5px solid var(--border);border-radius:10px;background:#fafaf8;font-family:'DM Sans',sans-serif}
+    .rk-btn{width:100%;padding:12px;font-size:14px;font-weight:700;border-radius:12px;cursor:pointer;margin-top:12px;font-family:'DM Sans',sans-serif}
+    .rk-lihat{background:#fff;color:var(--brown);border:1.5px solid var(--brown)}
+    .rk-kirim{background:var(--brown);color:#fff;border:none}
+    .rk-btn:disabled{opacity:.55;cursor:wait}
+    #rk-status{margin-top:12px;font-size:13px;font-weight:600}
+    #rk-status.ok{color:var(--green)} #rk-status.err{color:var(--red)}
+    #rk-teks{margin-top:12px;background:#fafaf8;border:1px solid var(--border);border-radius:10px;padding:12px;white-space:pre-wrap;word-break:break-word;font-family:Consolas,Menlo,monospace;font-size:12px;line-height:1.45;max-height:45vh;overflow:auto}
     .btn-save{background:var(--brown);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
     .btn-save:hover{background:var(--amber)}
     .user-list{margin-top:12px;display:flex;flex-direction:column;gap:8px}
@@ -260,6 +269,8 @@
     <div class="stat-card blue"><div class="stat-label">Total Cash</div><div class="stat-value" id="s-cash">-</div></div>
     <div class="stat-card amber"><div class="stat-label">Total EDC</div><div class="stat-value" id="s-edc">-</div></div>
     <div class="stat-card" style="border-left:4px solid #00b14f"><div class="stat-label">Pemasukan Grab</div><div class="stat-value" id="s-grab">-</div></div>
+    <div class="stat-card" id="stat-gojek" style="border-left:4px solid #00aa13;display:none"><div class="stat-label">Pemasukan Gojek</div><div class="stat-value" id="s-gojek">-</div></div>
+    <div class="stat-card" id="stat-shopee" style="border-left:4px solid #ee4d2d;display:none"><div class="stat-label">Pemasukan Shopee</div><div class="stat-value" id="s-shopee">-</div></div>
     <div class="stat-card red"><div class="stat-label">Pengeluaran</div><div class="stat-value" id="s-peng">-</div></div>
     <div class="stat-card" id="stat-selisih" style="border-left:4px solid #d1d5db"><div class="stat-label">🏦 Selisih Kas</div><div class="stat-value" id="s-selisih">—</div><div class="stat-sub" id="s-selisih-sub">belum ada data kas</div></div>
   </div>
@@ -311,7 +322,7 @@
             <th>Tanggal</th><th>Outlet</th><th>Shift</th><th>Karyawan</th>
             <th>Starting Cash</th><th style="text-align:right">Omset</th>
             <th style="text-align:right">Cash</th><th style="text-align:right">EDC</th>
-            <th style="text-align:right;color:#00b14f">Grab</th>
+            <th style="text-align:right;color:#00b14f">Online</th>
             <th style="text-align:right">Pengeluaran</th>
           </tr></thead>
           <tbody id="report-tbody"><tr><td colspan="10" class="empty-state">Memuat data...</td></tr></tbody>
@@ -322,6 +333,37 @@
     <div class="mobile-cards" id="report-mobile"></div>
   </div>
 </main>
+
+<!-- Modal Ringkasan Telegram -->
+<div class="modal-overlay" id="ringkasan-overlay" onclick="if(event.target.id==='ringkasan-overlay')closeRingkasan()">
+  <div class="modal">
+    <div class="modal-title">
+      📨 Ringkasan Telegram
+      <button class="modal-close" onclick="closeRingkasan()">×</button>
+    </div>
+    <label class="rk-label" for="rk-mode">Periode</label>
+    <select id="rk-mode" class="rk-input" onchange="rkUbah()">
+      <option value="kemarin">Kemarin</option>
+      <option value="hariini">Hari ini (sementara)</option>
+      <option value="7hari">7 hari terakhir (sampai kemarin)</option>
+      <option value="mingguLalu">Minggu lalu (Senin–Minggu)</option>
+      <option value="bulanIni">Bulan ini (sampai kemarin)</option>
+      <option value="bulanLalu">Bulan lalu</option>
+      <option value="tanggal">Tanggal tertentu…</option>
+      <option value="rentang">Rentang tanggal…</option>
+    </select>
+    <div id="rk-box-tanggal" style="display:none"><label class="rk-label" for="rk-tgl">Tanggal</label><input type="date" id="rk-tgl" class="rk-input"></div>
+    <div id="rk-box-rentang" style="display:none;gap:10px">
+      <div style="flex:1"><label class="rk-label" for="rk-d1">Dari</label><input type="date" id="rk-d1" class="rk-input"></div>
+      <div style="flex:1"><label class="rk-label" for="rk-d2">Sampai</label><input type="date" id="rk-d2" class="rk-input"></div>
+    </div>
+    <button class="rk-btn rk-lihat" id="rk-b-lihat" onclick="rkJalan(false)">👁️ Tampilkan di layar</button>
+    <button class="rk-btn rk-kirim" id="rk-b-kirim" onclick="rkJalan(true)">📨 Kirim ke Telegram</button>
+    <div id="rk-status"></div>
+    <pre id="rk-teks" style="display:none"></pre>
+    <div style="margin-top:14px;font-size:11px;color:var(--muted)"><a href="#" onclick="gantiUrlRingkasan();return false" style="color:var(--muted)">Ganti URL Web App</a></div>
+  </div>
+</div>
 
 <!-- Modal Settings -->
 <div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
@@ -410,16 +452,65 @@
   window.doLogout = () => Auth.logout();
 
   // Buka panel Ringkasan (Google Apps Script). URL disimpan di browser ini; tahan Shift saat klik untuk menggantinya.
+  const rkGetUrl = () => { try { return localStorage.getItem('ringkasan_url') || ''; } catch(e) { return ''; } };
+  const rkTanyaUrl = () => {
+    const url = (prompt('Tempel URL Web App Ringkasan (dari Apps Script → Deploy → Web app).\nCukup sekali di browser ini:') || '').trim();
+    if (!url) return '';
+    if (!/^https:\/\/script\.google\.com\/.+\/exec/.test(url)) { alert('URL tidak valid. Harus diawali https://script.google.com/ dan diakhiri /exec'); return ''; }
+    try { localStorage.setItem('ringkasan_url', url); } catch(e) {}
+    return url;
+  };
+  window.gantiUrlRingkasan = () => { rkTanyaUrl(); };
+  // Menu Ringkasan: buka panel Apps Script di tab baru (akses "Only myself" tetap aman).
   window.bukaRingkasan = (ev) => {
-    let url = '';
-    try { if (!(ev && ev.shiftKey)) url = localStorage.getItem('ringkasan_url') || ''; } catch(e) {}
-    if (!url) {
-      url = (prompt('Tempel URL Web App Ringkasan (dari Apps Script → Deploy → Web app).\nCukup sekali di browser ini:') || '').trim();
-      if (!url) return;
-      if (!/^https:\/\/script\.google\.com\/.+\/exec/.test(url)) { alert('URL tidak valid. Harus diawali https://script.google.com/ dan diakhiri /exec'); return; }
-      try { localStorage.setItem('ringkasan_url', url); } catch(e) {}
-    }
+    let url = (ev && ev.shiftKey) ? '' : rkGetUrl();
+    if (!url) url = rkTanyaUrl();
+    if (!url) return;
     window.open(url, '_blank');
+  };
+  // Versi jendela di dalam dashboard (butuh Apps Script diakses "Anyone"); belum dipakai.
+  window.bukaRingkasanModal = () => {
+    if (!rkGetUrl() && !rkTanyaUrl()) return;
+    document.getElementById('rk-status').textContent = '';
+    document.getElementById('rk-teks').style.display = 'none';
+    document.getElementById('ringkasan-overlay').classList.add('show');
+  };
+  window.closeRingkasan = () => document.getElementById('ringkasan-overlay').classList.remove('show');
+  window.rkUbah = () => {
+    const m = document.getElementById('rk-mode').value;
+    document.getElementById('rk-box-tanggal').style.display = m === 'tanggal' ? 'block' : 'none';
+    document.getElementById('rk-box-rentang').style.display = m === 'rentang' ? 'flex' : 'none';
+  };
+  window.rkJalan = async (kirim) => {
+    const url = rkGetUrl() || rkTanyaUrl();
+    if (!url) return;
+    const mode = document.getElementById('rk-mode').value;
+    let mulai = '', akhir = '';
+    if (mode === 'tanggal') mulai = document.getElementById('rk-tgl').value;
+    if (mode === 'rentang') { mulai = document.getElementById('rk-d1').value; akhir = document.getElementById('rk-d2').value; }
+    if ((mode === 'tanggal' && !mulai) || (mode === 'rentang' && (!mulai || !akhir))) {
+      const s = document.getElementById('rk-status'); s.className = 'err'; s.textContent = 'Isi tanggalnya dulu.'; return;
+    }
+    const st = document.getElementById('rk-status'), box = document.getElementById('rk-teks');
+    const bL = document.getElementById('rk-b-lihat'), bK = document.getElementById('rk-b-kirim');
+    st.className = ''; st.textContent = 'Memproses… (bisa 5–15 detik)'; bL.disabled = bK.disabled = true;
+    try {
+      const q = new URLSearchParams({ action: kirim ? 'kirim' : 'preview', mode, mulai, akhir });
+      const res = await fetch(url + (url.includes('?') ? '&' : '?') + q.toString());
+      let data;
+      try { data = await res.json(); }
+      catch (e) { throw new Error('Balasan bukan data. Cek: Deploy → Who has access harus "Anyone", lalu Deploy versi baru.'); }
+      if (!data.ok) throw new Error(data.error || 'Gagal');
+      st.className = 'ok';
+      st.textContent = kirim ? '✅ Terkirim ke Telegram.' : 'Pratinjau (belum dikirim ke Telegram).';
+      box.textContent = data.teks; box.style.display = 'block';
+    } catch (e) {
+      st.className = 'err';
+      const pesan = String(e && e.message || e);
+      st.textContent = '❌ ' + (/Failed to fetch|NetworkError|Load failed/i.test(pesan)
+        ? 'Tidak tersambung. Pastikan Apps Script sudah di-deploy ulang dengan akses "Anyone".' : pesan);
+      box.style.display = 'none';
+    } finally { bL.disabled = bK.disabled = false; }
   };
 
   // Dropdown toggle
@@ -566,6 +657,10 @@
     document.getElementById('s-cash').textContent  = fmtK(s.totalCash);
     document.getElementById('s-edc').textContent   = fmtK(s.totalEdc);
     document.getElementById('s-grab').textContent  = fmtK(s.totalGrab);
+    document.getElementById('s-gojek').textContent  = fmtK(s.totalGojek);
+    document.getElementById('s-shopee').textContent = fmtK(s.totalShopee);
+    document.getElementById('stat-gojek').style.display  = s.totalGojek  > 0 ? '' : 'none';
+    document.getElementById('stat-shopee').style.display = s.totalShopee > 0 ? '' : 'none';
     document.getElementById('s-peng').textContent  = fmtK(s.totalPengeluaran);
     document.getElementById('s-count').textContent = `${s.count} laporan shift`;
 
@@ -675,6 +770,8 @@
         <div class="detail-row"><span class="detail-row-label">Penjualan Cash</span><span class="detail-row-value">${fmt(r.cash||0)}</span></div>
         <div class="detail-row"><span class="detail-row-label">Penjualan EDC</span><span class="detail-row-value">${fmt(r.edc||0)}</span></div>
         <div class="detail-row"><span class="detail-row-label" style="color:#00b14f">Penjualan Grab</span><span class="detail-row-value" style="color:#00b14f">${fmt(r.grab||0)}</span></div>
+        ${(r.gojek||0) > 0 ? `<div class="detail-row"><span class="detail-row-label" style="color:#00aa13">Penjualan Gojek</span><span class="detail-row-value" style="color:#00aa13">${fmt(r.gojek)}</span></div>` : ''}
+        ${(r.shopee||0) > 0 ? `<div class="detail-row"><span class="detail-row-label" style="color:#ee4d2d">Penjualan Shopee</span><span class="detail-row-value" style="color:#ee4d2d">${fmt(r.shopee)}</span></div>` : ''}
         <div class="detail-row"><span class="detail-row-label">Diskon Member</span><span class="detail-row-value" style="color:var(--red)">- ${fmt(r.diskon||0)}</span></div>
       </div>
       <div class="detail-total">
@@ -782,7 +879,7 @@
         <td style="text-align:right" class="text-green">${fmt(r.omset)}</td>
         <td style="text-align:right" class="text-muted">${fmt(r.cash)}</td>
         <td style="text-align:right" class="text-muted">${fmt(r.edc)}</td>
-        <td style="text-align:right;color:#00b14f;font-weight:500">${fmt(r.grab||0)}</td>
+        <td style="text-align:right;color:#00b14f;font-weight:500">${fmt((r.grab||0)+(r.gojek||0)+(r.shopee||0))}</td>
         <td style="text-align:right" class="text-red">${fmt(isNaN(r.totalPengeluaran) ? 0 : (r.totalPengeluaran || 0))}</td>
       </tr>`).join('');
 
@@ -801,7 +898,7 @@
           <div class="report-card-row"><span class="report-card-label">Starting Cash</span><span>${fmt(r.startingCash||0)}</span></div>
           <div class="report-card-row"><span class="report-card-label">Cash</span><span>${fmt(r.cash)}</span></div>
           <div class="report-card-row"><span class="report-card-label">EDC</span><span>${fmt(r.edc)}</span></div>
-          <div class="report-card-row"><span class="report-card-label" style="color:#00b14f">Grab</span><span style="color:#00b14f;font-weight:500">${fmt(r.grab||0)}</span></div>
+          <div class="report-card-row"><span class="report-card-label" style="color:#00b14f">Online</span><span style="color:#00b14f;font-weight:500">${fmt((r.grab||0)+(r.gojek||0)+(r.shopee||0))}</span></div>
           <div class="report-card-row"><span class="report-card-label">Pengeluaran</span><span style="color:var(--red)">${fmt(isNaN(r.totalPengeluaran) ? 0 : (r.totalPengeluaran || 0))}</span></div>
         </div>
         <div style="text-align:right;font-size:11px;color:var(--muted);margin-top:4px">Tap untuk detail →</div>
