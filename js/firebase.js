@@ -96,15 +96,18 @@ export const Storage = {
   },
 
   getSummary(reports) {
+    const safe = (n) => isNaN(n) || !n ? 0 : n;
     const laporanDenganKas = reports.filter(r => r.kasAkhirAktual > 0);
-    const totalSelisih = laporanDenganKas.reduce((s, r) => s + (r.selisihKas || 0), 0);
+    const totalSelisih = laporanDenganKas.reduce((s, r) => s + safe(r.selisihKas), 0);
     return {
-      totalOmset:       reports.reduce((s, r) => s + (r.omset || 0), 0),
-      totalCash:        reports.reduce((s, r) => s + (r.cash || 0), 0),
-      totalEdc:         reports.reduce((s, r) => s + (r.edc || 0), 0),
-      totalGrab:        reports.reduce((s, r) => s + (r.grab || 0), 0),
-      totalDiskon:      reports.reduce((s, r) => s + (r.diskon || 0), 0),
-      totalPengeluaran: reports.reduce((s, r) => s + (r.totalPengeluaran || 0), 0),
+      totalOmset:       reports.reduce((s, r) => s + safe(r.omset), 0),
+      totalCash:        reports.reduce((s, r) => s + safe(r.cash), 0),
+      totalEdc:         reports.reduce((s, r) => s + safe(r.edc), 0),
+      totalGrab:        reports.reduce((s, r) => s + safe(r.grab), 0),
+      totalGojek:       reports.reduce((s, r) => s + safe(r.gojek), 0),
+      totalShopee:      reports.reduce((s, r) => s + safe(r.shopee), 0),
+      totalDiskon:      reports.reduce((s, r) => s + safe(r.diskon), 0),
+      totalPengeluaran: reports.reduce((s, r) => s + safe(r.totalPengeluaran), 0),
       totalSelisihKas:  totalSelisih,
       jumlahLaporanKas: laporanDenganKas.length,
       count: reports.length
