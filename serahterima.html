@@ -138,6 +138,7 @@
 </main>
 
 <script type="module">
+  import { kirimTelegram } from './js/telegram.js';
   import { Auth, OutletManager } from './js/auth.js';
   import { Storage } from './js/firebase.js';
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
@@ -359,11 +360,7 @@
           selisihInfo +
           `\n\n_Dikonfirmasi oleh: ${user.nama}_`;
 
-        await fetch(`https://api.telegram.org/bot8613637829:AAERHEyn8KfJRcJIDra-w3h-kgYcS29WhMQ/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: '-1004291425176', message_thread_id: 2, text: pesan, parse_mode: 'Markdown' })
-        });
+        await kirimTelegram('serahterima', pesan);
       } catch(e) { console.warn('Telegram gagal:', e); }
 
       // Reset
