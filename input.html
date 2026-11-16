@@ -77,7 +77,7 @@
 </nav>
   <div class="success-banner" id="success-banner">
     <div style="font-size:24px">✅</div>
-    <div><strong style="font-size:14px;color:#065f46;display:block">Laporan berhasil disimpan!</strong><span style="font-size:12px;color:#047857">Data sudah masuk ke Firebase.</span></div>
+    <div><strong style="font-size:14px;color:#065f46;display:block">Laporan berhasil disimpan!</strong><span style="font-size:12px;color:#047857">Data sudah masuk ke Firebase.</span><span id="tg-status" style="display:block;font-size:12px;margin-top:4px;font-weight:600"></span></div>
   </div>
 
   <!-- Warning duplikat -->
@@ -206,6 +206,7 @@
   </div>
 
   <button class="btn-submit" id="btn-submit">💾 Simpan Laporan Shift</button>
+  <div style="text-align:center;font-size:10px;color:#a8977f;margin-top:8px">versi 16-Nov-2026 · notifikasi Telegram aktif</div>
 </main>
 
 <script type="module">
@@ -607,6 +608,7 @@
 
       // Kirim notifikasi Telegram
       btn.textContent = '📨 Mengirim notifikasi...';
+      let tgOk = false, tgErrMsg = '';
       try {
         const fmtRp = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
         const pengeluaranDetail = pengList.filter(p => p.nama && parseAngka(p.jumlah) > 0)
@@ -684,9 +686,11 @@
           console.warn('Telegram (Markdown) ditolak:', tgRes.j);
           tgRes = await kirimTg({ chat_id: '7202941698', text: pesan.replace(/[*_`]/g, '') });
         }
-        if (!tgRes.ok) console.warn('Telegram gagal terkirim:', tgRes.j);
+        tgOk = tgRes.ok;
+        if (!tgRes.ok) { console.warn('Telegram gagal terkirim:', tgRes.j); tgErrMsg = (tgRes.j && tgRes.j.description) || 'ditolak Telegram'; }
       } catch(tgErr) {
         console.warn('Notifikasi Telegram gagal:', tgErr);
+        tgErrMsg = String(tgErr && tgErr.message || tgErr);
         // Tidak gagalkan laporan meski notifikasi error
       }
 
@@ -701,9 +705,14 @@
       checkDuplicate();
 
       const banner = document.getElementById('success-banner');
+      const tgEl = document.getElementById('tg-status');
+      if (tgEl) {
+        tgEl.style.color = tgOk ? '#047857' : '#b91c1c';
+        tgEl.textContent = tgOk ? '📨 Notifikasi Telegram terkirim.' : '⚠️ Laporan TERSIMPAN, tapi notifikasi Telegram GAGAL (' + tgErrMsg + '). Beri tahu owner.';
+      }
       banner.classList.add('show');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      setTimeout(() => banner.classList.remove('show'), 4000);
+      setTimeout(() => banner.classList.remove('show'), tgOk ? 4000 : 15000);
     } catch(e) {
       alert('Gagal menyimpan: ' + e.message);
       btn.disabled = false;
