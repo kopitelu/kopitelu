@@ -221,6 +221,7 @@
         <a href="rekap-absensi-gps.html" class="dropdown-item">📍 Rekap Absensi GPS</a>
         <a href="setting-absensi.html" class="dropdown-item">⚙️ Setting Jam Absensi</a>
         <a href="absensi.html" class="dropdown-item">📅 Rekap Absensi</a>
+        <button class="dropdown-item" onclick="bukaRingkasan(event); closeMenu()">📨 Ringkasan Telegram</button>
         <a href="setoran-owner.html" class="dropdown-item">🏦 Manajemen Setoran</a>
         <div class="dropdown-divider"></div>
         <a href="home.html" class="dropdown-item" style="color:var(--brown);font-weight:600">📋 Input Laporan</a>
@@ -407,6 +408,19 @@
   document.getElementById('menu-user-label').textContent = user.nama;
   document.getElementById('menu-nama').textContent = user.nama;
   window.doLogout = () => Auth.logout();
+
+  // Buka panel Ringkasan (Google Apps Script). URL disimpan di browser ini; tahan Shift saat klik untuk menggantinya.
+  window.bukaRingkasan = (ev) => {
+    let url = '';
+    try { if (!(ev && ev.shiftKey)) url = localStorage.getItem('ringkasan_url') || ''; } catch(e) {}
+    if (!url) {
+      url = (prompt('Tempel URL Web App Ringkasan (dari Apps Script → Deploy → Web app).\nCukup sekali di browser ini:') || '').trim();
+      if (!url) return;
+      if (!/^https:\/\/script\.google\.com\/.+\/exec/.test(url)) { alert('URL tidak valid. Harus diawali https://script.google.com/ dan diakhiri /exec'); return; }
+      try { localStorage.setItem('ringkasan_url', url); } catch(e) {}
+    }
+    window.open(url, '_blank');
+  };
 
   // Dropdown toggle
   window.toggleMenu = () => {
