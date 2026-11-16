@@ -140,6 +140,7 @@
 </main>
 
 <script type="module">
+  import { kirimTelegram } from './js/telegram.js';
   import { Auth, OutletManager } from './js/auth.js';
   import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
   import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
@@ -470,10 +471,7 @@
           telatInfo +
           `\n📍 ${lokasiStatus}\n` +
           `📌 Jarak: ${gpsData.jarak}m dari outlet`;
-        await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
-          method: 'POST', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ chat_id: TELEGRAM_CHAT, text: pesan, parse_mode: 'Markdown' })
-        });
+        await kirimTelegram('absensi', pesan);
       } catch(e) { console.warn('Telegram gagal:', e); }
 
       // Sukses
