@@ -580,7 +580,12 @@
 
     try {
       // Cek duplikat sekali lagi sebelum simpan
-      const isDuplicate = await Storage.checkDuplicate(outlet, tanggal, shift);
+      // Tiga pengecekan dijalankan bersamaan (bukan satu per satu) supaya lebih cepat di jaringan lambat
+      const [isDuplicate, sorePagiKosong, serahBelum] = await Promise.all([
+        Storage.checkDuplicate(outlet, tanggal, shift),
+        pagiBelumAda(),
+        serahBelumAda()
+      ]);
       if (isDuplicate) {
         alert('Laporan shift ini sudah pernah diinput!');
         btn.disabled = true;
@@ -589,13 +594,12 @@
       }
 
       // Pengaman salah pilih shift: Sore dipilih padahal laporan Pagi hari itu belum ada
-      if (await pagiBelumAda()) {
+      if (sorePagiKosong) {
         const ok = confirm('⚠️ Kamu memilih SHIFT SORE, tapi laporan SHIFT PAGI hari ini belum ada.\n\nKalau kamu bertugas shift PAGI, tekan Batal lalu ganti pilihan ke Shift Pagi.\n\nTekan OK hanya jika memang ini laporan Shift Sore.');
         if (!ok) { btn.disabled = false; btn.textContent = '💾 Simpan Laporan Shift'; return; }
       }
 
       // Pengaman lupa serah terima: laporan boleh lanjut, tapi owner diberi tahu lewat Telegram
-      const serahBelum = await serahBelumAda();
       if (serahBelum) {
         const ok2 = confirm('🤝 SERAH TERIMA SHIFT ' + shift.toUpperCase() + ' BELUM DIISI.\n\nTekan BATAL, lalu isi dulu di menu Serah Terima Kas.\n\nTekan OK hanya jika memang tidak ada serah terima (owner akan diberi tahu).');
         if (!ok2) { btn.disabled = false; btn.textContent = '💾 Simpan Laporan Shift'; return; }
@@ -619,6 +623,36 @@
       const outletNama = (await OutletManager.getNamesMap())[outlet] || outlet;
       const waktuInput = now.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour12: false });
 
+      // Data pembanding Starting Cash diambil SELAGI laporan disimpan (paralel), hanya untuk isi pesan Telegram
+      const fmtRp = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
+      const withTimeout = (pr, ms) => Promise.race([pr, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+      const startingInfoPromise = (async () => {
+        try {
+          const PREV_SHIFT = { Sore: 'Pagi', Pagi: 'Sore' };
+          const prevShift = PREV_SHIFT[shift];
+          if (!prevShift) return '';
+          const nowWIB = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+          const prevTanggal = shift === 'Pagi'
+            ? (() => { const d = new Date(nowWIB); d.setDate(d.getDate() - 1); return d.toISOString().split('T')[0]; })()
+            : tanggal;
+          const prevReports = await withTimeout(Storage.getReports(outlet, prevTanggal, prevTanggal), 4000);
+          const prevReport = prevReports.find(r => r.shift === prevShift);
+          if (!(prevReport && prevReport.kasAkhirAktual > 0)) return '';
+          const setoranSnap = await withTimeout(Storage.getSetoranByDate(prevTanggal), 4000);
+          const setoranOutlet = setoranSnap.filter(x =>
+            x.outlet === outlet &&
+            x.createdAt > (prevReport.createdAt || '') &&
+            x.createdAt < now.toISOString()
+          );
+          const totalSetoranAntarShift = setoranOutlet.reduce((a, r) => a + (r.nominal || 0), 0);
+          const expectedStarting = prevReport.kasAkhirAktual - totalSetoranAntarShift;
+          const selisihStarting = startingCash - expectedStarting;
+          return selisihStarting === 0
+            ? `\n✅ *Starting Cash sesuai* dengan kas shift ${prevShift}`
+            : `\n🚨 *Starting Cash tidak sesuai!*\n  • Seharusnya: ${fmtRp(expectedStarting)}\n  • Diinput: ${fmtRp(startingCash)}\n  • Selisih: ${selisihStarting > 0 ? '+' : ''}${fmtRp(selisihStarting)}`;
+        } catch(e) { console.warn('Starting cash check error:', e); return ''; }
+      })();
+
       await Storage.saveReport({
         outlet, shift, tanggal, startingCash, cash, edc, grab, gojek, shopee, diskon, omset,
         pengeluaran: pengIsi.map(p => ({ nama: p.nama.trim(), jumlah: parseAngka(p.jumlah) })),
@@ -632,94 +666,57 @@
         createdAtWIB: waktuInput
       });
 
-      // Kirim notifikasi Telegram
-      btn.textContent = '📨 Mengirim notifikasi...';
-      let tgOk = false, tgErrMsg = '';
-      try {
-        const fmtRp = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
-        const pengeluaranDetail = pengList.filter(p => p.nama && parseAngka(p.jumlah) > 0)
-          .map(p => `  • ${p.nama}: ${fmtRp(parseAngka(p.jumlah))}`).join('\n') || '  • -';
-        const kasInfo = kasAkhirAktual > 0
-          ? `\n💰 *Kas Akhir*\n  • Teoritis: ${fmtRp(kasAkhirTeoritis)}\n  • Aktual: ${fmtRp(kasAkhirAktual)}\n  • Selisih: ${selisihKas === 0 ? '✅ Rp 0' : (selisihKas > 0 ? '⚠️ +' : '🚨 ') + fmtRp(selisihKas)}`
-          : '';
+      // Kirim notifikasi Telegram di LATAR BELAKANG — pegawai tidak perlu menunggu.
+      // Data form difoto dulu di sini karena form akan di-reset di bawah.
+      const onlineExtra = punyaOnlineExtra();
+      const karyawanTxt = karyawanList.join(', ');
+      const pengeluaranDetail = pengList.filter(p => p.nama && parseAngka(p.jumlah) > 0)
+        .map(p => `  • ${p.nama}: ${fmtRp(parseAngka(p.jumlah))}`).join('\n') || '  • -';
+      const kasInfo = kasAkhirAktual > 0
+        ? `\n💰 *Kas Akhir*\n  • Teoritis: ${fmtRp(kasAkhirTeoritis)}\n  • Aktual: ${fmtRp(kasAkhirAktual)}\n  • Selisih: ${selisihKas === 0 ? '✅ Rp 0' : (selisihKas > 0 ? '⚠️ +' : '🚨 ') + fmtRp(selisihKas)}`
+        : '';
 
-        // Batas waktu supaya pengecekan tambahan tidak menahan pengiriman notifikasi di jaringan lambat
-        const withTimeout = (pr, ms) => Promise.race([pr, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
-
-        // Cek Starting Cash vs Kas Akhir shift sebelumnya
-        let startingCashInfo = '';
+      const notifPromise = (async () => {
         try {
-          const PREV_SHIFT = { Sore: 'Pagi', Pagi: 'Sore' };
-          const prevShift = PREV_SHIFT[shift];
-          if (prevShift) {
-            const nowWIB = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
-            const prevTanggal = shift === 'Pagi'
-              ? (() => { const d = new Date(nowWIB); d.setDate(d.getDate() - 1); return d.toISOString().split('T')[0]; })()
-              : tanggal;
+          const startingCashInfo = await startingInfoPromise;
+          const pesan = `☕ *LAPORAN SHIFT MASUK*\n\n` +
+            `🏪 *${outletNama}*\n` +
+            `📅 ${tanggal.split('-').reverse().join('/')} — Shift ${shift}\n` +
+            `👤 ${karyawanTxt}\n` +
+            `🕐 ${waktuInput}\n\n` +
+            `💵 *Penjualan*\n` +
+            `  • Cash: ${fmtRp(cash)}\n` +
+            `  • EDC: ${fmtRp(edc)}\n` +
+            `  • Grab: ${fmtRp(grab)}\n` +
+            (onlineExtra ? `  • Gojek: ${fmtRp(gojek)}\n  • Shopee: ${fmtRp(shopee)}\n` : '') +
+            `  • Diskon: ${fmtRp(diskon)}\n` +
+            `  • *Total Omset: ${fmtRp(omset)}*\n\n` +
+            `🧾 *Pengeluaran* (${fmtRp(totalPengeluaran)})\n${pengeluaranDetail}` +
+            kasInfo +
+            startingCashInfo +
+            (serahBelum ? `\n\n🤝 ⚠️ *Serah terima shift ${shift} BELUM diisi*` : '') +
+            (catatan ? `\n\n📝 _${catatan}_` : '') +
+            `\n\n_Diinput oleh: ${user.nama}_`;
 
-            const prevReports = await withTimeout(Storage.getReports(outlet, prevTanggal, prevTanggal), 5000);
-            const prevReport = prevReports.find(r => r.shift === prevShift);
-
-            if (prevReport && prevReport.kasAkhirAktual > 0) {
-              // Cek setoran antar shift
-              const setoranSnap = await withTimeout(Storage.getSetoranByDate(prevTanggal), 5000);
-              const setoranOutlet = setoranSnap.filter(s =>
-                s.outlet === outlet &&
-                s.createdAt > (prevReport.createdAt || '') &&
-                s.createdAt < now.toISOString()
-              );
-              const totalSetoranAntarShift = setoranOutlet.reduce((s, r) => s + (r.nominal || 0), 0);
-              const expectedStarting = prevReport.kasAkhirAktual - totalSetoranAntarShift;
-              const selisihStarting = startingCash - expectedStarting;
-
-              if (selisihStarting === 0) {
-                startingCashInfo = `\n✅ *Starting Cash sesuai* dengan kas shift ${prevShift}`;
-              } else {
-                startingCashInfo = `\n🚨 *Starting Cash tidak sesuai!*\n  • Seharusnya: ${fmtRp(expectedStarting)}\n  • Diinput: ${fmtRp(startingCash)}\n  • Selisih: ${selisihStarting > 0 ? '+' : ''}${fmtRp(selisihStarting)}`;
-              }
-            }
+          // Kalau Markdown ditolak (karakter seperti _ * [ di nama/catatan), kirim ulang sebagai teks biasa.
+          const tgUrl = `https://api.telegram.org/bot8613637829:AAERHEyn8KfJRcJIDra-w3h-kgYcS29WhMQ/sendMessage`;
+          const kirimTg = async (body) => {
+            const r = await fetch(tgUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), keepalive: true });
+            let j = {}; try { j = await r.json(); } catch(e) {}
+            return { ok: r.ok && j.ok !== false, j };
+          };
+          let tgRes = await kirimTg({ chat_id: '7202941698', text: pesan, parse_mode: 'Markdown' });
+          if (!tgRes.ok) {
+            console.warn('Telegram (Markdown) ditolak:', tgRes.j);
+            tgRes = await kirimTg({ chat_id: '7202941698', text: pesan.replace(/[*_`]/g, '') });
           }
-        } catch(e) { console.warn('Starting cash check error:', e); }
-
-        const pesan = `☕ *LAPORAN SHIFT MASUK*\n\n` +
-          `🏪 *${outletNama}*\n` +
-          `📅 ${tanggal.split('-').reverse().join('/')} — Shift ${shift}\n` +
-          `👤 ${karyawanList.join(', ')}\n` +
-          `🕐 ${waktuInput}\n\n` +
-          `💵 *Penjualan*\n` +
-          `  • Cash: ${fmtRp(cash)}\n` +
-          `  • EDC: ${fmtRp(edc)}\n` +
-          `  • Grab: ${fmtRp(grab)}\n` +
-          (punyaOnlineExtra() ? `  • Gojek: ${fmtRp(gojek)}\n  • Shopee: ${fmtRp(shopee)}\n` : '') +
-          `  • Diskon: ${fmtRp(diskon)}\n` +
-          `  • *Total Omset: ${fmtRp(omset)}*\n\n` +
-          `🧾 *Pengeluaran* (${fmtRp(totalPengeluaran)})\n${pengeluaranDetail}` +
-          kasInfo +
-          startingCashInfo +
-          (serahBelum ? `\n\n🤝 ⚠️ *Serah terima shift ${shift} BELUM diisi*` : '') +
-          (catatan ? `\n\n📝 _${catatan}_` : '') +
-          `\n\n_Diinput oleh: ${user.nama}_`;
-
-        // Kirim ke Telegram. Kalau ditolak (biasanya karena karakter Markdown seperti _ * [ di nama/catatan),
-        // kirim ulang sebagai teks biasa supaya laporan tetap sampai.
-        const tgUrl = `https://api.telegram.org/bot8613637829:AAERHEyn8KfJRcJIDra-w3h-kgYcS29WhMQ/sendMessage`;
-        const kirimTg = async (body) => {
-          const r = await fetch(tgUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), keepalive: true });
-          let j = {}; try { j = await r.json(); } catch(e) {}
-          return { ok: r.ok && j.ok !== false, j };
-        };
-        let tgRes = await kirimTg({ chat_id: '7202941698', text: pesan, parse_mode: 'Markdown' });
-        if (!tgRes.ok) {
-          console.warn('Telegram (Markdown) ditolak:', tgRes.j);
-          tgRes = await kirimTg({ chat_id: '7202941698', text: pesan.replace(/[*_`]/g, '') });
+          if (!tgRes.ok) console.warn('Telegram gagal terkirim:', tgRes.j);
+          return { ok: tgRes.ok, err: tgRes.ok ? '' : ((tgRes.j && tgRes.j.description) || 'ditolak Telegram') };
+        } catch(tgErr) {
+          console.warn('Notifikasi Telegram gagal:', tgErr);
+          return { ok: false, err: String((tgErr && tgErr.message) || tgErr) };
         }
-        tgOk = tgRes.ok;
-        if (!tgRes.ok) { console.warn('Telegram gagal terkirim:', tgRes.j); tgErrMsg = (tgRes.j && tgRes.j.description) || 'ditolak Telegram'; }
-      } catch(tgErr) {
-        console.warn('Notifikasi Telegram gagal:', tgErr);
-        tgErrMsg = String(tgErr && tgErr.message || tgErr);
-        // Tidak gagalkan laporan meski notifikasi error
-      }
+      })();
 
       // Reset form
       karyawanList = []; pengList = [{ nama: 'Bahan Baku', jumlah: 0 }];
@@ -733,13 +730,16 @@
 
       const banner = document.getElementById('success-banner');
       const tgEl = document.getElementById('tg-status');
-      if (tgEl) {
-        tgEl.style.color = tgOk ? '#047857' : '#b91c1c';
-        tgEl.textContent = tgOk ? '📨 Notifikasi Telegram terkirim.' : '⚠️ Laporan TERSIMPAN, tapi notifikasi Telegram GAGAL (' + tgErrMsg + '). Beri tahu owner.';
-      }
+      if (tgEl) { tgEl.style.color = '#7a6652'; tgEl.textContent = '⏳ Mengirim notifikasi Telegram...'; }
       banner.classList.add('show');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      setTimeout(() => banner.classList.remove('show'), tgOk ? 4000 : 15000);
+      notifPromise.then(({ ok, err }) => {
+        if (tgEl) {
+          tgEl.style.color = ok ? '#047857' : '#b91c1c';
+          tgEl.textContent = ok ? '📨 Notifikasi Telegram terkirim.' : '⚠️ Laporan TERSIMPAN, tapi notifikasi Telegram GAGAL (' + err + '). Beri tahu owner.';
+        }
+        setTimeout(() => banner.classList.remove('show'), ok ? 4000 : 15000);
+      });
     } catch(e) {
       alert('Gagal menyimpan: ' + e.message);
       btn.disabled = false;
