@@ -676,9 +676,13 @@
         ? `\n💰 *Kas Akhir*\n  • Teoritis: ${fmtRp(kasAkhirTeoritis)}\n  • Aktual: ${fmtRp(kasAkhirAktual)}\n  • Selisih: ${selisihKas === 0 ? '✅ Rp 0' : (selisihKas > 0 ? '⚠️ +' : '🚨 ') + fmtRp(selisihKas)}`
         : '';
 
+      // notifMulai dipanggil begitu permintaan ke Telegram SUDAH DIKIRIM (bukan menunggu selesai),
+      // supaya pesan tetap sampai walau pegawai langsung menutup halaman.
+      let notifMulai; const notifMulaiP = new Promise(r => { notifMulai = r; });
       const notifPromise = (async () => {
         try {
-          const startingCashInfo = await startingInfoPromise;
+          // Info starting cash maksimal ditunggu 1,5 detik; lewat itu pesan tetap dikirim tanpa info tsb
+          const startingCashInfo = await Promise.race([startingInfoPromise, new Promise(r => setTimeout(() => r(''), 1500))]);
           const pesan = `☕ *LAPORAN SHIFT MASUK*\n\n` +
             `🏪 *${outletNama}*\n` +
             `📅 ${tanggal.split('-').reverse().join('/')} — Shift ${shift}\n` +
@@ -705,7 +709,9 @@
             let j = {}; try { j = await r.json(); } catch(e) {}
             return { ok: r.ok && j.ok !== false, j };
           };
-          let tgRes = await kirimTg({ chat_id: '7202941698', text: pesan, parse_mode: 'Markdown' });
+          const kirimPertama = kirimTg({ chat_id: '7202941698', text: pesan, parse_mode: 'Markdown' });
+          notifMulai();
+          let tgRes = await kirimPertama;
           if (!tgRes.ok) {
             console.warn('Telegram (Markdown) ditolak:', tgRes.j);
             tgRes = await kirimTg({ chat_id: '7202941698', text: pesan.replace(/[*_`]/g, '') });
@@ -714,9 +720,12 @@
           return { ok: tgRes.ok, err: tgRes.ok ? '' : ((tgRes.j && tgRes.j.description) || 'ditolak Telegram') };
         } catch(tgErr) {
           console.warn('Notifikasi Telegram gagal:', tgErr);
+          notifMulai();
           return { ok: false, err: String((tgErr && tgErr.message) || tgErr) };
         }
       })();
+
+      await notifMulaiP;   // pastikan permintaan Telegram sudah berangkat sebelum form dikosongkan
 
       // Reset form
       karyawanList = []; pengList = [{ nama: 'Bahan Baku', jumlah: 0 }];
@@ -730,7 +739,7 @@
 
       const banner = document.getElementById('success-banner');
       const tgEl = document.getElementById('tg-status');
-      if (tgEl) { tgEl.style.color = '#7a6652'; tgEl.textContent = '⏳ Mengirim notifikasi Telegram...'; }
+      if (tgEl) { tgEl.style.color = '#7a6652'; tgEl.textContent = '⏳ Mengirim notifikasi Telegram... jangan tutup halaman dulu.'; }
       banner.classList.add('show');
       window.scrollTo({ top: 0, behavior: 'smooth' });
       notifPromise.then(({ ok, err }) => {
